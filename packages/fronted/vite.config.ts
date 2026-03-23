@@ -4,7 +4,7 @@ import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/petSchool/',  // GitHub Pages 路径
+  base: '/',  // Vercel 部署使用根路径
   plugins: [react()],
   resolve: {
     alias: {
