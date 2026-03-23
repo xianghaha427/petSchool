@@ -1,6 +1,7 @@
 {
-  "buildCommand": "cd packages/fronted && npm install && npm run build",
+  "buildCommand": "cd packages/fronted && npm run build",
   "outputDirectory": "packages/fronted/dist",
   "devCommand": "cd packages/fronted && npm run dev",
-  "installCommand": "cd packages/fronted && npm install"
+  "installCommand": "cd packages/fronted && npm install",
+  "framework": "vite"
 }
