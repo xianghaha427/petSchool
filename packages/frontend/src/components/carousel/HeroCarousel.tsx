@@ -6,7 +6,7 @@ const carouselImages = [
   {
     id: '1',
     url: '/images/carousel/dog.jpg',
-    title: '可爱的狗狗们',
+    title: '修狗学园',
     description: '校园里的萌宠日常',
   },
   {
