@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.petschool.mapper.CarouselMapper">
+
+    <resultMap id="BaseResultMap" type="com.petschool.entity.Carousel">
+        <id column="id" property="id"/>
+        <result column="image_url" property="imageUrl"/>
+        <result column="title" property="title"/>
+        <result column="link_url" property="linkUrl"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <!-- 查询启用的轮播图列表 -->
+    <select id="selectEnabledCarousels" resultMap="BaseResultMap">
+        SELECT id, image_url, title, link_url, sort_order
+        FROM carousel
+        WHERE status = 1
+        ORDER BY sort_order ASC
+    </select>
+
+    <!-- 根据 ID 查询轮播图 -->
+    <select id="selectCarouselById" resultMap="BaseResultMap">
+        SELECT *
+        FROM carousel
+        WHERE id = #{id}
+    </select>
+
+</mapper>

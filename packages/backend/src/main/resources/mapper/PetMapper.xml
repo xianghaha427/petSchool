@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.petschool.mapper.PetMapper">
+
+    <resultMap id="BaseResultMap" type="com.petschool.entity.Pet">
+        <id column="id" property="id"/>
+        <result column="student_id" property="studentId"/>
+        <result column="name" property="name"/>
+        <result column="species" property="species"/>
+        <result column="breed" property="breed"/>
+        <result column="age" property="age"/>
+        <result column="weight" property="weight"/>
+        <result column="gender" property="gender"/>
+        <result column="photo_url" property="photoUrl"/>
+        <result column="description" property="description"/>
+        <result column="owner_name" property="ownerName"/>
+        <result column="owner_contact" property="ownerContact"/>
+        <result column="vaccination_date" property="vaccinationDate"/>
+        <result column="is_vaccinated" property="isVaccinated"/>
+        <result column="is_neutered" property="isNeutered"/>
+        <result column="health_status" property="healthStatus"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, student_id, name, species, breed, age, weight, gender, photo_url, description,
+        owner_name, owner_contact, vaccination_date, is_vaccinated, is_neutered, health_status,
+        status, create_time, update_time
+    </sql>
+
+    <!-- 分页查询宠物列表（带条件） -->
+    <select id="selectPageWithConditions" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM pet
+        <where>
+            <if test="queryMap != null and queryMap['student_id'] != null and queryMap['student_id'] != ''">
+                AND student_id = #{queryMap['student_id']}
+            </if>
+            <if test="queryMap != null and queryMap['name'] != null and queryMap['name'] != ''">
+                AND name LIKE CONCAT('%', #{queryMap['name']}, '%')
+            </if>
+            <if test="queryMap != null and queryMap['species'] != null and queryMap['species'] != ''">
+                AND species = #{queryMap['species']}
+            </if>
+            AND status = 1
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据学号查询宠物 -->
+    <select id="selectByStudentId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM pet
+        WHERE student_id = #{studentId}
+        AND status = 1
+    </select>
+
+    <!-- 根据 ID 查询宠物详情 -->
+    <select id="selectPetDetail" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM pet
+        WHERE id = #{id}
+        AND status = 1
+    </select>
+
+</mapper>

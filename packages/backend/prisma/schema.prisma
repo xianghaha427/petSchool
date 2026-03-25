@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// 宠物信息表
+model Pet {
+  id          String   @id @default(uuid())
+  name        String
+  studentId   String?
+  species     String
+  breed       String?
+  age         Int
+  ageUnit     String   @default("month") // month or year
+  weight      Float
+  gender      String   // male or female
+  photoUrl    String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 主人信息
+  ownerId       String?
+  owner         Owner?  @relation(fields: [ownerId], references: [id])
+
+  // 健康信息
+  healthInfo    HealthInfo?
+
+  // 登记记录
+  registrations Registration[]
+}
+
+// 主人信息表
+model Owner {
+  id        String   @id @default(uuid())
+  name      String
+  contact   String
+  pets      Pet[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 健康信息表
+model HealthInfo {
+  id             String   @id @default(uuid())
+  isVaccinated   Boolean  @default(false)
+  vaccinationDate DateTime?
+  isNeutered     Boolean  @default(false)
+  healthStatus   String?
+  petId          String   @unique
+  pet            Pet      @relation(fields: [petId], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// 登记记录表
+model Registration {
+  id          String   @id @default(uuid())
+  status      String   @default("pending") // pending, approved, rejected
+  petId       String
+  pet         Pet      @relation(fields: [petId], references: [id])
+  submittedAt DateTime @default(now())
+  reviewedAt  DateTime?
+  reviewedBy  String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
