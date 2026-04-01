@@ -30,6 +30,7 @@ mybatis-plus:
       logic-delete-field: deleted
       logic-delete-value: 1
       logic-not-delete-value: 0
+      table-underline: true
 
 # Knife4j/Swagger 配置
 knife4j:

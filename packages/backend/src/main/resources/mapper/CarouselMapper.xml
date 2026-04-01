@@ -26,5 +26,4 @@
         FROM carousel
         WHERE id = #{id}
     </select>
-
 </mapper>

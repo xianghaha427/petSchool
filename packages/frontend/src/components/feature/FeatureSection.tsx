@@ -17,7 +17,7 @@ function FeatureCard({ title, description, icon, path, imageUrl }: FeatureCardPr
       whileHover={{ y: -8, scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       onClick={() => navigate(path)}
-      className="relative overflow-hidden rounded-2xl cursor-pointer shadow-xl h-[200px]"
+      className="relative overflow-hidden rounded-2xl cursor-pointer shadow-xl h-[280px]"
     >
       {/* 背景图片 */}
       <div
@@ -63,9 +63,9 @@ export default function FeatureSection() {
 
   return (
     <section className="container mx-auto px-4 py-16">
-      {/* 占 3/4 宽度 */}
-      <div className="max-w-[75%] mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 min-h-[200px]">
+      {/* 全宽 */}
+      <div className="w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {features.map((feature, index) => (
             <motion.div
               key={feature.path}

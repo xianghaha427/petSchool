@@ -26,7 +26,7 @@ export function PetCard({ pet }: PetCardProps) {
     >
       <Link to={`/pets/${pet.id}`} className="block">
         {/* 宠物照片 */}
-        <div className="relative h-64 overflow-hidden">
+        <div className="relative h-72 overflow-hidden">
           <img
             src={pet.photoUrl}
             alt={pet.name}
@@ -36,7 +36,7 @@ export function PetCard({ pet }: PetCardProps) {
         </div>
 
         {/* 信息卡片 */}
-        <div className="p-5">
+        <div className="p-6">
           {/* 姓名和学号 */}
           <div className="flex justify-between items-start mb-3">
             <h3 className="text-xl font-bold text-gray-800 group-hover:text-primary transition-colors">
