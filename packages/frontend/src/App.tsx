@@ -7,6 +7,7 @@ import PetsPage from '@/pages/PetsPage'
 import PetDetailPage from '@/pages/PetDetailPage'
 import RegisterPage from '@/pages/RegisterPage'
 import LoginPage from '@/pages/LoginPage'
+import CampusMap from '@/pages/CampusMap'
 import ProtectedRoute from '@/components/ProtectedRoute'
 
 function ScrollToTop() {
@@ -48,7 +49,7 @@ function App() {
           } />
           <Route path="/map" element={
             <ProtectedRoute>
-              <div className="container mx-auto px-4 py-20 text-center">校园地图 - 开发中</div>
+              <CampusMap />
             </ProtectedRoute>
           } />
         </Routes>
