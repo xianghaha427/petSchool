@@ -6,6 +6,7 @@ import com.petschool.entity.Pet;
 import com.petschool.vo.PageVO;
 import com.petschool.vo.PetVO;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -19,7 +20,7 @@ public interface PetService {
     Pet getbyId(Long petId);
 
     /**
-     * 分页查询宠物列表
+     * 分页查询宠物列表（带搜索筛选）
      */
     PageVO<PetVO> getPetList(PetPageDTO petPageDTO);
 
@@ -31,7 +32,7 @@ public interface PetService {
     /**
      * 创建宠物
      */
-    void createPet(PetDTO petDTO);
+    void createPet(PetDTO petDTO, Long userId);
 
     /**
      * 更新宠物
@@ -42,4 +43,19 @@ public interface PetService {
      * 删除宠物
      */
     void deletePet(Long petId);
+
+    /**
+     * 查询用户自己的宠物列表
+     */
+    List<PetVO> getMyPets(Long userId);
+
+    /**
+     * 更新用户自己的宠物
+     */
+    void updateMyPet(Long petId, Long userId, PetDTO petDTO);
+
+    /**
+     * 删除用户自己的宠物
+     */
+    void deleteMyPet(Long petId, Long userId);
 }

@@ -9,7 +9,10 @@ import RegisterPage from '@/pages/RegisterPage'
 import LoginPage from '@/pages/LoginPage'
 import CampusMap from '@/pages/CampusMap'
 import ProtectedRoute from '@/components/ProtectedRoute'
-import { ToastProvider } from '@/components/ui/Toast'
+import ProfilePage from '@/pages/ProfilePage'
+import MyPetsPage from '@/pages/MyPetsPage'
+import PetEditPage from '@/pages/PetEditPage'
+import FavoritesPage from '@/pages/FavoritesPage'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -23,42 +26,60 @@ function ScrollToTop() {
 
 function App() {
   return (
-    <ToastProvider>
-      <div className="flex flex-col min-h-screen">
-        <ScrollToTop />
-        <Header />
-        <main className="flex-1 pt-16">
-          <Routes>
-            {/* 公开页面 */}
-            <Route path="/" element={<HomePage />} />
-            <Route path="/login" element={<LoginPage />} />
+    <div className="flex flex-col min-h-screen">
+      <ScrollToTop />
+      <Header />
+      <main className="flex-1 pt-16">
+        <Routes>
+          {/* 公开页面 */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
 
-            {/* 需要登录的页面 */}
-            <Route path="/pets" element={
-              <ProtectedRoute>
-                <PetsPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/pets/:id" element={
-              <ProtectedRoute>
-                <PetDetailPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/register" element={
-              <ProtectedRoute>
-                <RegisterPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/map" element={
-              <ProtectedRoute>
-                <CampusMap />
-              </ProtectedRoute>
-            } />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
-    </ToastProvider>
+          {/* 需要登录的页面 */}
+          <Route path="/pets" element={
+            <ProtectedRoute>
+              <PetsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/pets/:id" element={
+            <ProtectedRoute>
+              <PetDetailPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/pets/:id/edit" element={
+            <ProtectedRoute>
+              <PetEditPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/register" element={
+            <ProtectedRoute>
+              <RegisterPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/map" element={
+            <ProtectedRoute>
+              <CampusMap />
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          } />
+          <Route path="/my-pets" element={
+            <ProtectedRoute>
+              <MyPetsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/favorites" element={
+            <ProtectedRoute>
+              <FavoritesPage />
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </main>
+      <Footer />
+    </div>
   )
 }
 

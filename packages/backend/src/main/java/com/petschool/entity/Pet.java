@@ -22,6 +22,11 @@ public class Pet {
     private Long id;
 
     /**
+     * 创建用户ID
+     */
+    private Long userId;
+
+    /**
      * 学号（格式：P20240001）
      */
     private String studentId;

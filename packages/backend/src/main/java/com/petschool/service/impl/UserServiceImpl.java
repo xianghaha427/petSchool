@@ -2,7 +2,10 @@ package com.petschool.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.petschool.common.constant.UserConstant;
+import com.petschool.common.exception.BusinessException;
+import com.petschool.dto.PasswordChangeDTO;
 import com.petschool.dto.UserDTO;
+import com.petschool.dto.UserProfileUpdateDTO;
 import com.petschool.entity.User;
 import com.petschool.mapper.UserMapper;
 import com.petschool.service.UserService;
@@ -65,5 +68,41 @@ public class UserServiceImpl implements UserService {
         user.setStatus(UserConstant.ENABLE); //1表示正常
         //将用户信息保存到数据库中
         userMapper.insert(user);
+    }
+
+    //更新用户资料
+    @Override
+    public void updateProfile(Long userId, UserProfileUpdateDTO profileDTO) {
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException(404, "用户不存在");
+        }
+        if (profileDTO.getNickname() != null) {
+            user.setNickname(profileDTO.getNickname());
+        }
+        if (profileDTO.getEmail() != null) {
+            user.setEmail(profileDTO.getEmail());
+        }
+        if (profileDTO.getPhone() != null) {
+            user.setPhone(profileDTO.getPhone());
+        }
+        if (profileDTO.getAvatarUrl() != null) {
+            user.setAvatarUrl(profileDTO.getAvatarUrl());
+        }
+        userMapper.updateById(user);
+    }
+
+    //修改密码
+    @Override
+    public void changePassword(Long userId, PasswordChangeDTO passwordDTO) {
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException(404, "用户不存在");
+        }
+        if (!user.getPassword().equals(passwordDTO.getOldPassword())) {
+            throw new BusinessException(400, "旧密码错误");
+        }
+        user.setPassword(passwordDTO.getNewPassword());
+        userMapper.updateById(user);
     }
 }

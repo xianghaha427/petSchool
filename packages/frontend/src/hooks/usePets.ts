@@ -1,24 +1,28 @@
 import { useQuery } from '@tanstack/react-query';
-import { petService } from '@/services/petService';
+import { petService, PetSearchParams } from '@/services/petService';
+import type { Pet } from '@/types/pet';
 
-interface UsePetsOptions {
-  page?: number;
-  limit?: number;
+interface UsePetsOptions extends PetSearchParams {
+  pageNum?: number;
+  pageSize?: number;
 }
 
-export function usePets({ page = 1, limit = 12 }: UsePetsOptions = {}) {
+export function usePets({ pageNum = 1, pageSize = 12, ...rest }: UsePetsOptions = {}) {
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['pets', page, limit],
-    queryFn: () => petService.getPets(page, limit),
+    queryKey: ['pets', pageNum, pageSize, rest],
+    queryFn: async () => {
+      const res = await petService.getPets({ pageNum, pageSize, ...rest });
+      return res;
+    },
   });
 
   return {
     pets: data?.list || [],
     total: data?.total || 0,
-    currentPage: data?.pageNum || page,
-    totalPages: data?.pages || 0,
+    currentPage: data?.pageNum || pageNum,
+    totalPages: data?.pages || 1,
     isLoading,
-    error,
+    error: error ? '加载失败，请稍后重试' : null,
     refetch,
   };
 }

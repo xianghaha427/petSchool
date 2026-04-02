@@ -18,10 +18,7 @@ public class JwtTokenInterceptor implements HandlerInterceptor{
     @Autowired
     private JwtProperties jwtProperties;
 
-    // 请求属性 key，用于存储用户 ID
     public static final String USER_ID_KEY = "currentUserId";
-    // 请求属性 key，用于存储用户角色
-    public static final String USER_ROLE_KEY = "currentUserRole";
 
     //校验jwt
 
@@ -38,13 +35,9 @@ public class JwtTokenInterceptor implements HandlerInterceptor{
             log.info("jwt校验:{}", token);
             Claims claims = JwtUtil.parseJwt(jwtProperties.getSecretKey(), token);
             Long userId = Long.valueOf(claims.get(JwtConstant.USER_ID).toString());
-            Integer userRole = Integer.valueOf(claims.get(JwtConstant.USER_ROLE).toString());
-            log.info("当前用户id：{}，角色：{}", userId, userRole);
-
-            // 将用户信息存储到请求属性中，供后续使用
+            log.info("当前用户id：{}", userId);
+            //将userId存储到请求属性中，供Controller使用
             request.setAttribute(USER_ID_KEY, userId);
-            request.setAttribute(USER_ROLE_KEY, userRole);
-
             //3.通过，放行
             return true;
         }catch (Exception e){
