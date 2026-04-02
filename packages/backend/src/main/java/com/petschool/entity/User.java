@@ -24,6 +24,11 @@ public class User extends Model<User> {
     private String userName;
 
     /**
+     * 昵称
+     */
+    private String nickname;
+
+    /**
      * 密码（加密存储）
      */
     private String password;

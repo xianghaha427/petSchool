@@ -10,9 +10,10 @@ function cn(...inputs: Array<string | undefined | null | false>) {
 
 interface PetCardProps {
   pet: Pet;
+  showActions?: boolean;
 }
 
-export function PetCard({ pet }: PetCardProps) {
+export function PetCard({ pet, showActions = false }: PetCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -72,14 +73,14 @@ export function PetCard({ pet }: PetCardProps) {
             <span
               className={cn(
                 'px-2 py-1 rounded text-xs font-medium',
-                pet.gender === 'male'
+                pet.gender === 1
                   ? 'bg-blue-100 text-blue-600'
                   : 'bg-pink-100 text-pink-600'
               )}
             >
-              {pet.gender === 'male' ? '♂️ 男生' : '♀️ 女生'}
+              {pet.gender === 1 ? '♂️ 男生' : '♀️ 女生'}
             </span>
-            {pet.isVaccinated && (
+            {pet.isVaccinated === 1 && (
               <span className="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-600">
                 ✅ 已疫苗
               </span>

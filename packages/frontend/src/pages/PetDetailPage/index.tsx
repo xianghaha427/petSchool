@@ -1,12 +1,50 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import { usePetDetail } from '@/hooks/usePetDetail';
+import { petService } from '@/services/petService';
 import { motion } from 'framer-motion';
+import { TIFFY_BLUE, TIFFY_BLUE_DARK } from '@/styles/theme';
 
 export default function PetDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { pet, isLoading, error } = usePetDetail(id || '');
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favoriting, setFavoriting] = useState(false);
+
+  useEffect(() => {
+    if (id) {
+      checkFavorite();
+    }
+  }, [id]);
+
+  const checkFavorite = async () => {
+    if (!id) return;
+    try {
+      const favorited = await petService.checkFavorite(Number(id));
+      setIsFavorited(favorited);
+    } catch (err) {
+      // ignore
+    }
+  };
+
+  const handleFavorite = async () => {
+    if (!id) return;
+    setFavoriting(true);
+    try {
+      if (isFavorited) {
+        await petService.removeFavorite(Number(id));
+        setIsFavorited(false);
+      } else {
+        await petService.addFavorite(Number(id));
+        setIsFavorited(true);
+      }
+    } catch (err) {
+      console.error('操作失败', err);
+    }
+    setFavoriting(false);
+  };
 
   if (isLoading) {
     return (
@@ -39,7 +77,7 @@ export default function PetDetailPage() {
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          返回上一步
+          返回
         </button>
 
         {/* 宠物信息卡片 */}
@@ -53,11 +91,24 @@ export default function PetDetailPage() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-4xl font-bold">{pet.name}</h1>
-                <span className="px-3 py-1 bg-gradient-to-r from-primary to-secondary rounded-full text-sm font-medium">
-                  {pet.studentId}
-                </span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-4xl font-bold">{pet.name}</h1>
+                  <span className="px-3 py-1 bg-gradient-to-r from-primary to-secondary rounded-full text-sm font-medium">
+                    {pet.studentId}
+                  </span>
+                </div>
+                <button
+                  onClick={handleFavorite}
+                  disabled={favoriting}
+                  className={`px-4 py-2 rounded-full transition-all ${
+                    isFavorited
+                      ? 'bg-red-500 text-white'
+                      : 'bg-white/20 text-white hover:bg-white/30'
+                  }`}
+                >
+                  {favoriting ? '...' : isFavorited ? '❤️ 已收藏' : '🤍 收藏'}
+                </button>
               </div>
               <p className="text-lg opacity-90">{pet.description || '暂无简介'}</p>
             </div>
@@ -86,10 +137,10 @@ export default function PetDetailPage() {
               </div>
               <div className="text-center p-4 bg-gray-50 rounded-xl">
                 <span className="text-2xl mb-2 block">
-                  {pet.gender === 'male' ? '♂️' : '♀️'}
+                  {pet.gender === 1 ? '♂️' : '♀️'}
                 </span>
                 <span className="text-sm text-gray-600">性别</span>
-                <p className="font-medium">{pet.gender === 'male' ? '男生' : '女生'}</p>
+                <p className="font-medium">{pet.gender === 1 ? '男生' : '女生'}</p>
               </div>
             </div>
 
@@ -97,7 +148,7 @@ export default function PetDetailPage() {
             <div className="border-t pt-6">
               <h3 className="text-xl font-bold mb-4">健康信息</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center gap-3 p-4 rounded-xl {pet.isVaccinated ? 'bg-green-50' : 'bg-gray-50'}">
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-gray-50">
                   <span className="text-2xl">{pet.isVaccinated ? '✅' : '⏳'}</span>
                   <div>
                     <p className="text-sm text-gray-600">疫苗接种</p>

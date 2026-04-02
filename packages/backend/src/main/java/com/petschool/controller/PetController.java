@@ -4,15 +4,21 @@ import com.petschool.common.Result;
 import com.petschool.dto.PetDTO;
 import com.petschool.dto.PetPageDTO;
 import com.petschool.entity.Pet;
+import com.petschool.interceptor.JwtTokenInterceptor;
+import com.petschool.service.FavoriteService;
 import com.petschool.service.PetService;
 import com.petschool.vo.PageVO;
 import com.petschool.vo.PetVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 宠物管理 Controller
@@ -25,6 +31,9 @@ public class PetController {
 
     @Autowired
     private PetService petService;
+
+    @Autowired
+    private FavoriteService favoriteService;
 
     // 分页查询宠物列表
     @Operation(summary = "分页查询宠物列表")
@@ -57,9 +66,10 @@ public class PetController {
     // 创建宠物
     @Operation(summary = "创建宠物登记")
     @PostMapping
-    public Result createPet(@RequestBody PetDTO petDTO) {
-        log.info("创建宠物登记");
-        petService.createPet(petDTO);
+    public Result createPet(HttpServletRequest request, @RequestBody PetDTO petDTO) {
+        Long userId = (Long) request.getAttribute(JwtTokenInterceptor.USER_ID_KEY);
+        log.info("创建宠物登记, userId: {}", userId);
+        petService.createPet(petDTO, userId);
         return Result.success();
     }
 

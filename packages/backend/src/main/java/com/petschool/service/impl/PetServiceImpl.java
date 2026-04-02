@@ -1,8 +1,10 @@
 package com.petschool.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.petschool.common.constant.PetConstant;
+import com.petschool.common.exception.BusinessException;
 import com.petschool.dto.PetDTO;
 import com.petschool.dto.PetPageDTO;
 import com.petschool.entity.Pet;
@@ -14,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -39,7 +42,7 @@ public class PetServiceImpl implements PetService {
         return pet;
     }
 
-    // 分页查询宠物列表
+    // 分页查询宠物列表（带搜索筛选）
     @Override
     public PageVO<PetVO> getPetList(PetPageDTO petPageDTO) {
         log.info("分页查询宠物列表，请求参数：{}", petPageDTO);
@@ -48,19 +51,47 @@ public class PetServiceImpl implements PetService {
         Page<Pet> page = new Page<>(petPageDTO.getPageNum(), petPageDTO.getPageSize());
 
         // 构建查询条件
-        Map<String, Object> queryMap = new HashMap<>();
-        if (petPageDTO.getStudentId() != null && !petPageDTO.getStudentId().isEmpty()) {
-            queryMap.put("student_id", petPageDTO.getStudentId());
+        QueryWrapper<Pet> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("status", PetConstant.ENABLE);
+
+        if (StringUtils.hasText(petPageDTO.getKeyword())) {
+            queryWrapper.and(w -> w.like("name", petPageDTO.getKeyword())
+                    .or().like("student_id", petPageDTO.getKeyword()));
         }
-        if (petPageDTO.getName() != null && !petPageDTO.getName().isEmpty()) {
-            queryMap.put("name", petPageDTO.getName());
+        if (StringUtils.hasText(petPageDTO.getStudentId())) {
+            queryWrapper.eq("student_id", petPageDTO.getStudentId());
         }
-        if (petPageDTO.getSpecies() != null && !petPageDTO.getSpecies().isEmpty()) {
-            queryMap.put("species", petPageDTO.getSpecies());
+        if (StringUtils.hasText(petPageDTO.getName())) {
+            queryWrapper.like("name", petPageDTO.getName());
+        }
+        if (StringUtils.hasText(petPageDTO.getSpecies())) {
+            queryWrapper.eq("species", petPageDTO.getSpecies());
+        }
+        if (StringUtils.hasText(petPageDTO.getBreed())) {
+            queryWrapper.eq("breed", petPageDTO.getBreed());
+        }
+        if (petPageDTO.getGender() != null) {
+            queryWrapper.eq("gender", petPageDTO.getGender());
+        }
+        if (petPageDTO.getMinAge() != null) {
+            queryWrapper.ge("age", petPageDTO.getMinAge());
+        }
+        if (petPageDTO.getMaxAge() != null) {
+            queryWrapper.le("age", petPageDTO.getMaxAge());
+        }
+
+        // 排序
+        String sort = petPageDTO.getSort();
+        if ("oldest".equals(sort)) {
+            queryWrapper.orderByAsc("create_time");
+        } else if ("name".equals(sort)) {
+            queryWrapper.orderByAsc("name");
+        } else {
+            queryWrapper.orderByDesc("create_time"); // 默认最新
         }
 
         // 执行分页查询
-        IPage<Pet> petPage = petMapper.selectPageWithConditions(page, queryMap);
+        IPage<Pet> petPage = petMapper.selectPage(page, queryWrapper);
 
         // 转换为 PetVO 列表
         List<PetVO> petVOList = petPage.getRecords().stream()
@@ -97,7 +128,7 @@ public class PetServiceImpl implements PetService {
 
     // 创建宠物
     @Override
-    public void createPet(PetDTO petDTO) {
+    public void createPet(PetDTO petDTO, Long userId) {
         log.info("创建宠物，请求参数：{}", petDTO);
 
         // 校验学号是否已存在
@@ -109,6 +140,7 @@ public class PetServiceImpl implements PetService {
         // 创建宠物
         Pet pet = new Pet();
         BeanUtils.copyProperties(petDTO, pet);
+        pet.setUserId(userId);
         pet.setCreateTime(LocalDateTime.now());
         pet.setUpdateTime(LocalDateTime.now());
         pet.setStatus(PetConstant.ENABLE);
@@ -150,6 +182,49 @@ public class PetServiceImpl implements PetService {
         existPet.setStatus(PetConstant.DISABLE);
         petMapper.updateById(existPet);
         log.info("删除宠物成功，petId={}", petId);
+    }
+
+    // 获取用户自己的宠物列表
+    @Override
+    public List<PetVO> getMyPets(Long userId) {
+        log.info("查询用户自己的宠物列表，userId={}", userId);
+        QueryWrapper<Pet> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", userId);
+        queryWrapper.eq("status", PetConstant.ENABLE);
+        queryWrapper.orderByDesc("create_time");
+        List<Pet> pets = petMapper.selectList(queryWrapper);
+        return pets.stream().map(this::convertToVO).collect(Collectors.toList());
+    }
+
+    // 更新用户自己的宠物
+    @Override
+    public void updateMyPet(Long petId, Long userId, PetDTO petDTO) {
+        log.info("更新用户自己的宠物，petId={}, userId={}", petId, userId);
+        Pet existPet = petMapper.selectById(petId);
+        if (existPet == null) {
+            throw new BusinessException(404, "宠物不存在");
+        }
+        if (!existPet.getUserId().equals(userId)) {
+            throw new BusinessException(403, "无权操作此宠物");
+        }
+        BeanUtils.copyProperties(petDTO, existPet);
+        existPet.setUpdateTime(LocalDateTime.now());
+        petMapper.updateById(existPet);
+    }
+
+    // 删除用户自己的宠物
+    @Override
+    public void deleteMyPet(Long petId, Long userId) {
+        log.info("删除用户自己的宠物，petId={}, userId={}", petId, userId);
+        Pet existPet = petMapper.selectById(petId);
+        if (existPet == null) {
+            throw new BusinessException(404, "宠物不存在");
+        }
+        if (!existPet.getUserId().equals(userId)) {
+            throw new BusinessException(403, "无权操作此宠物");
+        }
+        existPet.setStatus(PetConstant.DISABLE);
+        petMapper.updateById(existPet);
     }
 
     /**

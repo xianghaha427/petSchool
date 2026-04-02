@@ -18,6 +18,30 @@ export interface LoginResponse {
   token: string
 }
 
+export interface UserProfile {
+  id: number
+  userName: string
+  nickname?: string
+  email?: string
+  phone?: string
+  avatarUrl?: string
+  role?: number
+  status?: number
+  createTime?: string
+}
+
+export interface ProfileUpdateRequest {
+  nickname?: string
+  email?: string
+  phone?: string
+  avatarUrl?: string
+}
+
+export interface PasswordChangeRequest {
+  oldPassword: string
+  newPassword: string
+}
+
 export const userService = {
   // 用户登录
   login: async (data: LoginRequest): Promise<LoginResponse> => {
@@ -36,7 +60,23 @@ export const userService = {
     if (!userId) return null
     const res = await apiClient.get(`/users/${userId}`)
     return res.data
-  }
+  },
+
+  // 获取个人资料
+  getProfile: async (): Promise<UserProfile> => {
+    const res = await apiClient.get<{ data: UserProfile }>('/users/profile')
+    return res.data
+  },
+
+  // 更新个人资料
+  updateProfile: async (data: ProfileUpdateRequest): Promise<void> => {
+    await apiClient.put('/users/profile', data)
+  },
+
+  // 修改密码
+  changePassword: async (data: PasswordChangeRequest): Promise<void> => {
+    await apiClient.put('/users/password', data)
+  },
 }
 
 export default userService

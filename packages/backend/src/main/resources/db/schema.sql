@@ -9,6 +9,7 @@ USE `pet_school`;
 DROP TABLE IF EXISTS `pet`;
 CREATE TABLE `pet` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键 ID',
+  `user_id` BIGINT UNSIGNED DEFAULT NULL COMMENT '创建用户ID',
   `student_id` VARCHAR(32) NOT NULL COMMENT '学号（格式：P20240001）',
   `name` VARCHAR(64) NOT NULL COMMENT '宠物姓名',
   `species` VARCHAR(32) NOT NULL COMMENT '种类（狗、猫等）',
@@ -30,7 +31,9 @@ CREATE TABLE `pet` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_student_id` (`student_id`),
   KEY `idx_name` (`name`),
-  KEY `idx_species` (`species`)
+  KEY `idx_species` (`species`),
+  KEY `idx_user_id` (`user_id`),
+  CONSTRAINT `fk_pet_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE SET NULL
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COMMENT='宠物信息表';
 
 -- 轮播图表
@@ -52,6 +55,7 @@ CREATE TABLE `user` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `username` VARCHAR(64) NOT NULL COMMENT '用户名',
   `password` VARCHAR(128) NOT NULL COMMENT '密码（加密存储）',
+  `nickname` VARCHAR(64) DEFAULT NULL COMMENT '昵称',
   `email` VARCHAR(128) DEFAULT NULL COMMENT '邮箱',
   `phone` VARCHAR(32) DEFAULT NULL COMMENT '手机号',
   `avatar_url` VARCHAR(512) DEFAULT NULL COMMENT '头像 URL',
@@ -61,6 +65,20 @@ CREATE TABLE `user` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
+
+-- 收藏表
+DROP TABLE IF EXISTS `favorite`;
+CREATE TABLE `favorite` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键 ID',
+  `user_id` BIGINT UNSIGNED NOT NULL COMMENT '用户ID',
+  `pet_id` BIGINT UNSIGNED NOT NULL COMMENT '宠物ID',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '收藏时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_pet` (`user_id`, `pet_id`),
+  KEY `idx_pet_id` (`pet_id`),
+  CONSTRAINT `fk_favorite_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_favorite_pet` FOREIGN KEY (`pet_id`) REFERENCES `pet` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='收藏表';
 
 -- 插入测试数据
 -- 轮播图测试数据

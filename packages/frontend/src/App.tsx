@@ -9,6 +9,10 @@ import RegisterPage from '@/pages/RegisterPage'
 import LoginPage from '@/pages/LoginPage'
 import CampusMap from '@/pages/CampusMap'
 import ProtectedRoute from '@/components/ProtectedRoute'
+import ProfilePage from '@/pages/ProfilePage'
+import MyPetsPage from '@/pages/MyPetsPage'
+import PetEditPage from '@/pages/PetEditPage'
+import FavoritesPage from '@/pages/FavoritesPage'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -42,6 +46,11 @@ function App() {
               <PetDetailPage />
             </ProtectedRoute>
           } />
+          <Route path="/pets/:id/edit" element={
+            <ProtectedRoute>
+              <PetEditPage />
+            </ProtectedRoute>
+          } />
           <Route path="/register" element={
             <ProtectedRoute>
               <RegisterPage />
@@ -50,6 +59,21 @@ function App() {
           <Route path="/map" element={
             <ProtectedRoute>
               <CampusMap />
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          } />
+          <Route path="/my-pets" element={
+            <ProtectedRoute>
+              <MyPetsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/favorites" element={
+            <ProtectedRoute>
+              <FavoritesPage />
             </ProtectedRoute>
           } />
         </Routes>

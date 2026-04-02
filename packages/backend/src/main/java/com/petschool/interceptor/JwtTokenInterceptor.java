@@ -17,6 +17,9 @@ import org.springframework.web.servlet.HandlerInterceptor;
 public class JwtTokenInterceptor implements HandlerInterceptor{
     @Autowired
     private JwtProperties jwtProperties;
+
+    public static final String USER_ID_KEY = "currentUserId";
+
     //校验jwt
 
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -33,6 +36,8 @@ public class JwtTokenInterceptor implements HandlerInterceptor{
             Claims claims = JwtUtil.parseJwt(jwtProperties.getSecretKey(), token);
             Long userId = Long.valueOf(claims.get(JwtConstant.USER_ID).toString());
             log.info("当前用户id：{}", userId);
+            //将userId存储到请求属性中，供Controller使用
+            request.setAttribute(USER_ID_KEY, userId);
             //3.通过，放行
             return true;
         }catch (Exception e){

@@ -16,6 +16,9 @@ public class PetPageDTO implements Serializable {
     // 每页数量
     private Integer pageSize = 10;
 
+    // 关键词搜索（名称或学号）
+    private String keyword;
+
     // 学号
     private String studentId;
 
@@ -24,4 +27,19 @@ public class PetPageDTO implements Serializable {
 
     // 物种
     private String species;
+
+    // 品种
+    private String breed;
+
+    // 性别：1-公，2-母
+    private Integer gender;
+
+    // 最小年龄
+    private Integer minAge;
+
+    // 最大年龄
+    private Integer maxAge;
+
+    // 排序：newest, oldest, name
+    private String sort = "newest";
 }
