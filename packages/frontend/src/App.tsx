@@ -9,6 +9,7 @@ import RegisterPage from '@/pages/RegisterPage'
 import LoginPage from '@/pages/LoginPage'
 import CampusMap from '@/pages/CampusMap'
 import ProtectedRoute from '@/components/ProtectedRoute'
+import { ToastProvider } from '@/components/ui/Toast'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -22,40 +23,42 @@ function ScrollToTop() {
 
 function App() {
   return (
-    <div className="flex flex-col min-h-screen">
-      <ScrollToTop />
-      <Header />
-      <main className="flex-1 pt-16">
-        <Routes>
-          {/* 公开页面 */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
+    <ToastProvider>
+      <div className="flex flex-col min-h-screen">
+        <ScrollToTop />
+        <Header />
+        <main className="flex-1 pt-16">
+          <Routes>
+            {/* 公开页面 */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
 
-          {/* 需要登录的页面 */}
-          <Route path="/pets" element={
-            <ProtectedRoute>
-              <PetsPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/pets/:id" element={
-            <ProtectedRoute>
-              <PetDetailPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/register" element={
-            <ProtectedRoute>
-              <RegisterPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/map" element={
-            <ProtectedRoute>
-              <CampusMap />
-            </ProtectedRoute>
-          } />
-        </Routes>
-      </main>
-      <Footer />
-    </div>
+            {/* 需要登录的页面 */}
+            <Route path="/pets" element={
+              <ProtectedRoute>
+                <PetsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/pets/:id" element={
+              <ProtectedRoute>
+                <PetDetailPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/register" element={
+              <ProtectedRoute>
+                <RegisterPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/map" element={
+              <ProtectedRoute>
+                <CampusMap />
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    </ToastProvider>
   )
 }
 

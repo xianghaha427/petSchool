@@ -1,15 +1,19 @@
 package com.petschool.controller;
 
 import com.petschool.common.Result;
+import com.petschool.common.constant.UserConstant;
 import com.petschool.dto.PetDTO;
 import com.petschool.dto.PetPageDTO;
 import com.petschool.entity.Pet;
+import com.petschool.interceptor.JwtTokenInterceptor;
 import com.petschool.service.PetService;
 import com.petschool.vo.PageVO;
 import com.petschool.vo.PetVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +29,14 @@ public class PetController {
 
     @Autowired
     private PetService petService;
+
+    /**
+     * 检查是否有管理员权限
+     */
+    private boolean isAdmin(HttpServletRequest request) {
+        Integer userRole = (Integer) request.getAttribute(JwtTokenInterceptor.USER_ROLE_KEY);
+        return UserConstant.EMPLOYEE.equals(userRole);
+    }
 
     // 分页查询宠物列表
     @Operation(summary = "分页查询宠物列表")
@@ -57,7 +69,7 @@ public class PetController {
     // 创建宠物
     @Operation(summary = "创建宠物登记")
     @PostMapping
-    public Result createPet(@RequestBody PetDTO petDTO) {
+    public Result createPet(@Valid @RequestBody PetDTO petDTO) {
         log.info("创建宠物登记");
         petService.createPet(petDTO);
         return Result.success();
@@ -68,8 +80,13 @@ public class PetController {
     @PutMapping("/{id}")
     public Result updatePet(
             @Parameter(description = "宠物 ID") @PathVariable("id") Long petId,
-            @RequestBody PetDTO petDTO) {
+            @Valid @RequestBody PetDTO petDTO,
+            HttpServletRequest request) {
         log.info("更新宠物信息");
+        // 权限检查：只有管理员可以更新宠物
+        if (!isAdmin(request)) {
+            return Result.error(403, "无权限操作，仅管理员可更新宠物信息");
+        }
         petService.updatePet(petId, petDTO);
         return Result.success();
     }
@@ -77,8 +94,14 @@ public class PetController {
     // 删除宠物
     @Operation(summary = "删除宠物")
     @DeleteMapping("/{id}")
-    public Result deletePet(@Parameter(description = "宠物 ID") @PathVariable("id") Long petId) {
+    public Result deletePet(
+            @Parameter(description = "宠物 ID") @PathVariable("id") Long petId,
+            HttpServletRequest request) {
         log.info("删除宠物");
+        // 权限检查：只有管理员可以删除宠物
+        if (!isAdmin(request)) {
+            return Result.error(403, "无权限操作，仅管理员可删除宠物");
+        }
         petService.deletePet(petId);
         return Result.success();
     }

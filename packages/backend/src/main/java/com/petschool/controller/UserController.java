@@ -10,6 +10,7 @@ import com.petschool.service.UserService;
 import com.petschool.utils.JwtUtil;
 import com.petschool.vo.UserLoginVO;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -37,24 +38,26 @@ public class UserController {
 
     //用户登录
     @PostMapping("/login")
-    public Result login(@RequestBody UserDTO userDTO){
+    public Result login(@Valid @RequestBody UserDTO userDTO){
         log.info("用户登录");
         User user=userService.login(userDTO);
         //生成jwt令牌
         Map<String,Object> claims=new HashMap<>();
         claims.put(JwtConstant.USER_ID,user.getId());
+        claims.put(JwtConstant.USER_ROLE,user.getRole());
         String token = JwtUtil.createJwt(jwtProperties.getSecretKey(), jwtProperties.getTtl(), claims);
         //生成视图对象返回
         UserLoginVO userLoginVO=UserLoginVO.builder()
                 .id(user.getId())
                 .userName(user.getUserName())
+                .role(user.getRole())
                 .token(token)
                 .build();
         return Result.success(userLoginVO);
     }
     //用户注册
     @PostMapping("/register")
-    public Result register(@RequestBody UserDTO userDTO){
+    public Result register(@Valid @RequestBody UserDTO userDTO){
         log.info("用户注册");
         userService.register(userDTO);
         return Result.success();

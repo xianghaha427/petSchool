@@ -45,6 +45,6 @@ logging:
     com.petschool.mapper: debug
 pet:
   jwt:
-    secret-key: xiangxiangaihaha1234567890hahaaixiangxiang1234567890
+    secret-key: ${JWT_SECRET_KEY:xiangxiangaihaha1234567890hahaaixiangxiang1234567890}
     ttl: 7200000000
     token-name: Authorization

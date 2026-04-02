@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import type { PetRegisterFormData } from '@/types/pet';
+import { useToast } from '@/components/ui/Toast';
 
 interface PetRegisterFormProps {
   onSubmit: (data: PetRegisterFormData) => Promise<void>;
@@ -19,6 +20,7 @@ export function PetRegisterForm({ onSubmit }: PetRegisterFormProps) {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { showToast } = useToast();
 
   const {
     register,
@@ -46,13 +48,13 @@ export function PetRegisterForm({ onSubmit }: PetRegisterFormProps) {
 
     // 验证文件类型
     if (!file.type.startsWith('image/')) {
-      alert('请选择图片文件');
+      showToast('请选择图片文件', 'error');
       return;
     }
 
     // 验证文件大小（最大 5MB）
     if (file.size > 5 * 1024 * 1024) {
-      alert('图片大小不能超过 5MB');
+      showToast('图片大小不能超过 5MB', 'error');
       return;
     }
 

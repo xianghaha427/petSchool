@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PetRegisterForm } from '@/components/petRegister/PetRegisterForm';
+import { petService } from '@/services/petService';
+import { useToast } from '@/components/ui/Toast';
 import type { PetRegisterFormData } from '@/types/pet';
+import { genderStringToNumber } from '@/utils/petUtils';
 
 // 蒂芙尼色主题
 const TIFFANY_BLUE = '#81C7D4';
@@ -13,18 +16,41 @@ const mockPetData: PetRegisterFormData[] = [];
 
 export default function RegisterPage() {
   const [activeTab, setActiveTab] = useState<'form' | 'list'>('form');
+  const { showToast } = useToast();
 
   const handleSubmit = async (data: PetRegisterFormData) => {
-    // TODO: 后期替换为 API 调用
-    // await petService.createPet(data);
+    try {
+      // 转换表单数据为 API 格式
+      const apiData = {
+        name: data.name,
+        studentId: data.studentId,
+        species: data.species,
+        breed: data.breed,
+        age: data.ageUnit === 'year' ? data.age * 12 : data.age, // 转换为月
+        weight: data.weight,
+        gender: genderStringToNumber(data.gender),
+        photoUrl: data.photoUrl || '/images/pets/default.jpg',
+        description: data.description,
+        ownerName: data.ownerName,
+        ownerContact: data.ownerContact,
+        isVaccinated: data.isVaccinated ? 1 : 0,
+        vaccinationDate: data.vaccinationDate,
+        isNeutered: data.isNeutered ? 1 : 0,
+        healthStatus: data.healthStatus,
+      };
 
-    // 模拟 API 延迟
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+      await petService.createPet(apiData);
 
-    // 存储到 mock 数据
-    mockPetData.push(data);
-    console.log('宠物登记数据:', data);
-    console.log('当前 mock 数据:', mockPetData);
+      // 存储到 mock 数据用于本地显示
+      mockPetData.push(data);
+      showToast('宠物登记成功！', 'success');
+      // 切换到列表视图
+      setActiveTab('list');
+      console.log('宠物登记数据:', apiData);
+    } catch (error) {
+      console.error('提交失败:', error);
+      showToast(error instanceof Error ? error.message : '提交失败，请稍后重试', 'error');
+    }
   };
 
   return (

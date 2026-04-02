@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { mockPets } from '@/data/mockPets';
-import type { Pet } from '@/types/pet';
+import { petService } from '@/services/petService';
 
 interface UsePetsOptions {
   page?: number;
@@ -8,16 +7,18 @@ interface UsePetsOptions {
 }
 
 export function usePets({ page = 1, limit = 12 }: UsePetsOptions = {}) {
-  // 使用 Mock 数据
-  const pets = mockPets.slice(0, limit);
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['pets', page, limit],
+    queryFn: () => petService.getPets(page, limit),
+  });
 
   return {
-    pets,
-    total: mockPets.length,
-    currentPage: page,
-    totalPages: Math.ceil(mockPets.length / limit),
-    isLoading: false,
-    error: null,
-    refetch: () => {},
+    pets: data?.list || [],
+    total: data?.total || 0,
+    currentPage: data?.pageNum || page,
+    totalPages: data?.pages || 0,
+    isLoading,
+    error,
+    refetch,
   };
 }

@@ -8,18 +8,19 @@ import com.petschool.mapper.UserMapper;
 import com.petschool.service.UserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Service
 public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserMapper userMapper;
+
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     //按id查询用户
     @Override
@@ -39,11 +40,11 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.selectOne(queryWrapper);
 
         if(user == null){
-            throw new RuntimeException("用户不存在");
+            throw new RuntimeException("用户名或密码错误");
         }
-        //校验密码
-        if(!user.getPassword().equals(password)){
-            throw new RuntimeException("密码错误");
+        //校验密码（使用 BCrypt 验证）
+        if(!passwordEncoder.matches(password, user.getPassword())){
+            throw new RuntimeException("用户名或密码错误");
         }
         return user;
     }
@@ -54,6 +55,8 @@ public class UserServiceImpl implements UserService {
         User user=new User();
         //将UserDTO对象的属性复制到User对象中
         BeanUtils.copyProperties(userDTO,user);
+        //密码哈希存储
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         //设置创建时间
         user.setCreateTime(LocalDateTime.now());
         //设置身份

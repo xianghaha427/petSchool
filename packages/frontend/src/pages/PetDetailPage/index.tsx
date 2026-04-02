@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import { usePetDetail } from '@/hooks/usePetDetail';
 import { motion } from 'framer-motion';
+import { getGenderEmoji, getGenderLabel } from '@/utils/petUtils';
 
 export default function PetDetailPage() {
   const navigate = useNavigate();
@@ -86,10 +87,10 @@ export default function PetDetailPage() {
               </div>
               <div className="text-center p-4 bg-gray-50 rounded-xl">
                 <span className="text-2xl mb-2 block">
-                  {pet.gender === 'male' ? '♂️' : '♀️'}
+                  {getGenderEmoji(pet.gender)}
                 </span>
                 <span className="text-sm text-gray-600">性别</span>
-                <p className="font-medium">{pet.gender === 'male' ? '男生' : '女生'}</p>
+                <p className="font-medium">{getGenderLabel(pet.gender)}</p>
               </div>
             </div>
 
