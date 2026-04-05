@@ -43,11 +43,15 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.selectOne(queryWrapper);
 
         if(user == null){
-            throw new RuntimeException("用户名或密码错误");
+            throw new RuntimeException("用户不存在");
         }
         //校验密码（使用 BCrypt 验证）
         if(!passwordEncoder.matches(password, user.getPassword())){
             throw new RuntimeException("用户名或密码错误");
+        }
+        // 检查用户状态是否启用
+        if (user.getStatus() == null || user.getStatus() != 1) {
+            throw new BusinessException(403, "账号已被禁用");
         }
         return user;
     }
@@ -66,6 +70,8 @@ public class UserServiceImpl implements UserService {
         user.setRole(UserConstant.NORMAL_USER); //0表示普通用户
         //设置状态
         user.setStatus(UserConstant.ENABLE); //1表示正常
+        //设置逻辑删除为0
+        user.setDeleted(0);
         //将用户信息保存到数据库中
         userMapper.insert(user);
     }
@@ -99,10 +105,12 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             throw new BusinessException(404, "用户不存在");
         }
-        if (!user.getPassword().equals(passwordDTO.getOldPassword())) {
+        // 使用BCrypt验证旧密码（不再是明文比较）
+        if (!passwordEncoder.matches(passwordDTO.getOldPassword(), user.getPassword())) {
             throw new BusinessException(400, "旧密码错误");
         }
-        user.setPassword(passwordDTO.getNewPassword());
+        // 新密码使用BCrypt加密存储
+        user.setPassword(passwordEncoder.encode(passwordDTO.getNewPassword()));
         userMapper.updateById(user);
     }
 }

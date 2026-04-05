@@ -2,6 +2,7 @@ import { Routes, Route, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { ToastProvider } from '@/components/ui/Toast'
 import HomePage from '@/pages/HomePage'
 import PetsPage from '@/pages/PetsPage'
 import PetDetailPage from '@/pages/PetDetailPage'
@@ -26,6 +27,7 @@ function ScrollToTop() {
 
 function App() {
   return (
+    <ToastProvider>
     <div className="flex flex-col min-h-screen">
       <ScrollToTop />
       <Header />
@@ -80,6 +82,7 @@ function App() {
       </main>
       <Footer />
     </div>
+    </ToastProvider>
   )
 }
 

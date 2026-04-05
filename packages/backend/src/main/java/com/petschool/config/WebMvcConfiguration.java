@@ -20,6 +20,8 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
                 .addPathPatterns("/**")//拦截所有请求
                 .excludePathPatterns("/users/login")
                 .excludePathPatterns("/users/register")
-                .excludePathPatterns("/carousel");//放行登录请求,因为jwt是通过登录请求生成返回的
+                .excludePathPatterns("/carousel")
+                .excludePathPatterns("/pets")//放行宠物列表查询
+                .excludePathPatterns("/pets/*");//放行单个宠物查询
     }
 }

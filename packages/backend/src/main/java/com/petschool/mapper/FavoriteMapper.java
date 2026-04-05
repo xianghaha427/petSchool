@@ -14,16 +14,16 @@ public interface FavoriteMapper extends BaseMapper<Favorite> {
 
     /**
      * 查询用户的收藏列表
-     */
+     *//*
     List<Favorite> selectByUserId(@Param("userId") Long userId);
 
-    /**
+    *//**
      * 查询用户是否收藏了指定宠物
-     */
+     *//*
     Favorite selectByUserIdAndPetId(@Param("userId") Long userId, @Param("petId") Long petId);
 
-    /**
+    *//**
      * 删除收藏
-     */
-    int deleteByUserIdAndPetId(@Param("userId") Long userId, @Param("petId") Long petId);
+     *//*
+    int deleteByUserIdAndPetId(@Param("userId") Long userId, @Param("petId") Long petId);*/
 }

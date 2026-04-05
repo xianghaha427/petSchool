@@ -17,10 +17,11 @@ export function Header() {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    // 检查登录状态
+  // 检查登录状态的函数
+  const checkAuth = () => {
     const token = localStorage.getItem('token');
     const username = localStorage.getItem('username');
+    console.log('Header检查登录状态, token:', !!token, 'username:', username);
     if (token) {
       setIsLoggedIn(true);
       setUsername(username || '');
@@ -28,7 +29,49 @@ export function Header() {
       setIsLoggedIn(false);
       setUsername('');
     }
-  }, [location]);
+  };
+
+  // 监听 localStorage 变化
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      console.log('localStorage 变化:', e.key, e.newValue, e.oldValue);
+      if (e.key === 'token') {
+        console.log('token 被修改, 新值:', !!e.newValue, '旧值:', !!e.oldValue);
+        checkAuth();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  useEffect(() => {
+    // 初始检查
+    checkAuth();
+  }, [location.pathname]);
+
+  // 监听 localStorage 变化
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      console.log('localStorage 变化:', e.key, e.newValue, e.oldValue);
+      if (e.key === 'token') {
+        console.log('token 被修改, 新值:', !!e.newValue, '旧值:', !!e.oldValue);
+        checkAuth();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    // 监听自定义 auth-change 事件
+    const handleAuthChange = () => {
+      console.log('收到 auth-change 事件');
+      checkAuth();
+    };
+    window.addEventListener('auth-change', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth-change', handleAuthChange);
+    };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

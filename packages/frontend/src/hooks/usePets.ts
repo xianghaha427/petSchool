@@ -17,10 +17,10 @@ export function usePets({ pageNum = 1, pageSize = 12, ...rest }: UsePetsOptions 
   });
 
   return {
-    pets: data?.list || [],
-    total: data?.total || 0,
-    currentPage: data?.pageNum || pageNum,
-    totalPages: data?.pages || 1,
+    pets: data?.data?.list || [],
+    total: data?.data?.total || 0,
+    currentPage: data?.data?.pageNum || pageNum,
+    totalPages: data?.data?.pages || 1,
     isLoading,
     error: error ? '加载失败，请稍后重试' : null,
     refetch,

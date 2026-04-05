@@ -15,7 +15,15 @@ export interface RegisterRequest {
 export interface LoginResponse {
   id: number
   userName: string
+  role?: number
   token: string
+}
+
+// 后端返回的完整响应结构
+export interface LoginApiResponse {
+  code: number
+  message: string
+  data: LoginResponse
 }
 
 export interface UserProfile {
@@ -44,9 +52,9 @@ export interface PasswordChangeRequest {
 
 export const userService = {
   // 用户登录
-  login: async (data: LoginRequest): Promise<LoginResponse> => {
-    const res = await apiClient.post('/users/login', data)
-    return res.data
+  login: async (data: LoginRequest): Promise<LoginApiResponse> => {
+    const res = await apiClient.post<LoginApiResponse>('/users/login', data)
+    return res
   },
 
   // 用户注册

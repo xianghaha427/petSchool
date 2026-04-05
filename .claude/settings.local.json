@@ -1,8 +1,18 @@
 {
   "permissions": {
     "allow": [
+      "Bash(git pull:*)",
+      "Bash(mv .claude/settings.local.json /tmp/)",
+      "Bash(git rm:*)",
+      "Bash(git fetch:*)",
       "mcp__filesystem__directory_tree",
-      "Bash(mysql:*)"
+      "Bash(mvn compile:*)",
+      "Bash(./mvnw compile:*)",
+      "Bash(mvn clean:*)",
+      "Bash(where mvn:*)",
+      "mcp__fetch__imageFetch",
+      "Bash(mvn dependency:tree -lombok)",
+      "WebFetch(domain:minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com)"
     ]
   }
 }

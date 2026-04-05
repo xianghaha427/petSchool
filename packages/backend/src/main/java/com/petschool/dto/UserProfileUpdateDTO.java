@@ -1,12 +1,17 @@
 package com.petschool.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.io.Serializable;
 
 /**
  * 用户资料更新 DTO
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class UserProfileUpdateDTO implements Serializable {
 
     /**

@@ -32,20 +32,37 @@ const LoginPage = () => {
   const [showRegister, setShowRegister] = useState(false)
 
   const handleLogin = async (e: React.FormEvent) => {
+    console.log('handleLogin 被调用了')
     e.preventDefault()
     setError('')
     setLoading(true)
+    console.log('loginForm:', loginForm)
 
     try {
       const res = await userService.login(loginForm)
+      console.log('登录响应完整数据:', JSON.stringify(res, null, 2))
+      // 后端返回 { code, message, data: { id, userName, token } }
+      // apiClient 拦截器已返回 response.data，所以 res 包含 code, message, data
+      // 实际 token 在 res.data.token
+      const token = res.data?.token
+      const userId = res.data?.id
+      const userName = res.data?.userName
+      console.log('token值:', token)
+      console.log('id值:', userId)
       // 保存 token 和用户信息
-      localStorage.setItem('token', res.token)
-      localStorage.setItem('userId', String(res.id))
-      localStorage.setItem('username', res.userName)
+      localStorage.setItem('token', token)
+      localStorage.setItem('userId', String(userId))
+      localStorage.setItem('username', userName)
+
+      console.log('localStorage中的token:', localStorage.getItem('token'))
+
+      // 触发自定义事件通知 Header 更新登录状态
+      window.dispatchEvent(new Event('auth-change'))
 
       // 跳转到首页
       navigate('/')
     } catch (err: any) {
+      console.error('登录错误:', err)
       setError(err.response?.data?.message || '登录失败，请检查用户名和密码')
     } finally {
       setLoading(false)

@@ -43,7 +43,8 @@ public class FavoriteServiceImpl implements FavoriteService {
         }
 
         // 检查是否已收藏
-        Favorite exist = favoriteMapper.selectByUserIdAndPetId(userId, petId);
+        Favorite exist = favoriteMapper.selectOne(new QueryWrapper<Favorite>()
+                .eq("user_id", userId).eq("pet_id", petId));
         if (exist != null) {
             throw new BusinessException(400, "已经收藏过了");
         }
@@ -60,14 +61,16 @@ public class FavoriteServiceImpl implements FavoriteService {
     @Transactional
     public void removeFavorite(Long userId, Long petId) {
         log.info("取消收藏, userId={}, petId={}", userId, petId);
-        favoriteMapper.deleteByUserIdAndPetId(userId, petId);
+        favoriteMapper.delete(new QueryWrapper<Favorite>()
+                .eq("user_id", userId).eq("pet_id", petId));
         log.info("取消收藏成功");
     }
 
     @Override
     public List<PetVO> getUserFavorites(Long userId) {
         log.info("获取用户收藏列表, userId={}", userId);
-        List<Favorite> favorites = favoriteMapper.selectByUserId(userId);
+        List<Favorite> favorites = favoriteMapper.selectList(new QueryWrapper<Favorite>()
+                .eq("user_id", userId));
         List<Long> petIds = favorites.stream().map(Favorite::getPetId).collect(Collectors.toList());
 
         if (petIds.isEmpty()) {
@@ -84,7 +87,8 @@ public class FavoriteServiceImpl implements FavoriteService {
 
     @Override
     public boolean isFavorited(Long userId, Long petId) {
-        Favorite favorite = favoriteMapper.selectByUserIdAndPetId(userId, petId);
+        Favorite favorite = favoriteMapper.selectOne(new QueryWrapper<Favorite>()
+                .eq("user_id", userId).eq("pet_id", petId));
         return favorite != null;
     }
 

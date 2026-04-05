@@ -1,49 +1,16 @@
-import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import { usePetDetail } from '@/hooks/usePetDetail';
-import { petService } from '@/services/petService';
 import { motion } from 'framer-motion';
-import { TIFFY_BLUE, TIFFY_BLUE_DARK } from '@/styles/theme';
 
 export default function PetDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { pet, isLoading, error } = usePetDetail(id || '');
-  const [isFavorited, setIsFavorited] = useState(false);
-  const [favoriting, setFavoriting] = useState(false);
 
-  useEffect(() => {
-    if (id) {
-      checkFavorite();
-    }
-  }, [id]);
-
-  const checkFavorite = async () => {
-    if (!id) return;
-    try {
-      const favorited = await petService.checkFavorite(Number(id));
-      setIsFavorited(favorited);
-    } catch (err) {
-      // ignore
-    }
-  };
-
-  const handleFavorite = async () => {
-    if (!id) return;
-    setFavoriting(true);
-    try {
-      if (isFavorited) {
-        await petService.removeFavorite(Number(id));
-        setIsFavorited(false);
-      } else {
-        await petService.addFavorite(Number(id));
-        setIsFavorited(true);
-      }
-    } catch (err) {
-      console.error('操作失败', err);
-    }
-    setFavoriting(false);
+  const handleBack = () => {
+    console.log('点击返回按钮, token:', localStorage.getItem('token'));
+    navigate('/pets');
   };
 
   if (isLoading) {
@@ -71,7 +38,7 @@ export default function PetDetailPage() {
       >
         {/* 返回按钮 */}
         <button
-          onClick={() => navigate(-1)}
+          onClick={handleBack}
           className="inline-flex items-center gap-2 text-gray-600 hover:text-primary mb-6 transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,24 +58,11 @@ export default function PetDetailPage() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-4xl font-bold">{pet.name}</h1>
-                  <span className="px-3 py-1 bg-gradient-to-r from-primary to-secondary rounded-full text-sm font-medium">
-                    {pet.studentId}
-                  </span>
-                </div>
-                <button
-                  onClick={handleFavorite}
-                  disabled={favoriting}
-                  className={`px-4 py-2 rounded-full transition-all ${
-                    isFavorited
-                      ? 'bg-red-500 text-white'
-                      : 'bg-white/20 text-white hover:bg-white/30'
-                  }`}
-                >
-                  {favoriting ? '...' : isFavorited ? '❤️ 已收藏' : '🤍 收藏'}
-                </button>
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-4xl font-bold">{pet.name}</h1>
+                <span className="px-3 py-1 bg-gradient-to-r from-primary to-secondary rounded-full text-sm font-medium">
+                  {pet.studentId}
+                </span>
               </div>
               <p className="text-lg opacity-90">{pet.description || '暂无简介'}</p>
             </div>

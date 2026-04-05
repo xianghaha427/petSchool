@@ -2,7 +2,9 @@ package com.petschool.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -12,6 +14,8 @@ import java.time.LocalDate;
  * 宠物 DTO - 用于接收前端请求参数
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Schema(description = "宠物信息")
 public class PetDTO implements Serializable {
 

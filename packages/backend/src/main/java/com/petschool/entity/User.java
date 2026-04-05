@@ -2,13 +2,18 @@ package com.petschool.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
 /**
  * 用户实体类
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @TableName("user")
 public class User extends Model<User> {
     /**

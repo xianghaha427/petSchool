@@ -19,14 +19,10 @@
     <description>PetSchool Backend API Server</description>
 
     <properties>
-        <!-- 数据库相关 -->
-        <mysql.version>8.1.0</mysql.version>
+        <java.version>17</java.version>
         <mybatis-plus.version>3.5.5</mybatis-plus.version>
-        <!-- 工具类 -->
         <lombok.version>1.18.30</lombok.version>
-        <!-- JWT -->
         <jjwt.version>0.11.5</jjwt.version>
-        <!-- API文档 -->
         <knife4j.version>4.4.0</knife4j.version>
     </properties>
 
@@ -76,7 +72,6 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-crypto</artifactId>
-            <version>6.2.0</version>
         </dependency>
 
         <!-- Test -->
@@ -113,6 +108,22 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

@@ -1,14 +1,22 @@
-import { mockPets } from '@/data/mockPets';
+import { useQuery } from '@tanstack/react-query';
+import { petService } from '@/services/petService';
 import type { Pet } from '@/types/pet';
 
 export function usePetDetail(id: string) {
-  // 使用 Mock 数据
-  const pet = mockPets.find((p) => p.id === id) || null;
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['pet', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const res = await petService.getPetById(Number(id));
+      return res;
+    },
+    enabled: !!id,
+  });
 
   return {
-    pet,
-    isLoading: false,
-    error: null,
-    refetch: () => {},
+    pet: data || null,
+    isLoading,
+    error: error ? '加载失败，请稍后重试' : null,
+    refetch,
   };
 }

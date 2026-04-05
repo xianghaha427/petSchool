@@ -17,7 +17,6 @@ class ApiClient {
     // 请求拦截器
     this.instance.interceptors.request.use(
       (config) => {
-        // 可以在这里添加 token 等
         const token = localStorage.getItem('token');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
@@ -36,12 +35,8 @@ class ApiClient {
       },
       (error: AxiosError) => {
         console.error('API Error:', error);
-        // 统一错误处理
-        if (error.response?.status === 401) {
-          // 未授权，跳转登录
-          localStorage.removeItem('token');
-          window.location.href = '/login';
-        }
+        // 注意：401 时不再清除 token，避免破坏登录状态
+        // 调用方可以自行处理 401 错误
         return Promise.reject(error);
       }
     );

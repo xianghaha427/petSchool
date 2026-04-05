@@ -1,6 +1,8 @@
 package com.petschool.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
@@ -8,6 +10,8 @@ import java.io.Serializable;
  * 分页查询参数 DTO
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class PetPageDTO implements Serializable {
 
     // 页码
