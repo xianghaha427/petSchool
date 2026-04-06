@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PetRegisterForm } from '@/components/petRegister/PetRegisterForm';
-import { petService } from '@/services/petService';
+import { petService, PetPending } from '@/services/petService';
 import { useToast } from '@/components/ui/Toast';
 import type { PetRegisterFormData } from '@/types/pet';
 import { genderStringToNumber } from '@/utils/petUtils';
@@ -11,12 +11,32 @@ const TIFFANY_BLUE = '#81C7D4';
 const TIFFANY_BLUE_DARK = '#5DA9B8';
 const TIFFANY_LIGHT = '#E0F2F5';
 
-// Mock 数据存储（后期替换为 API 调用）
-const mockPetData: PetRegisterFormData[] = [];
-
 export default function RegisterPage() {
   const [activeTab, setActiveTab] = useState<'form' | 'list'>('form');
+  const [pendingList, setPendingList] = useState<PetPending[]>([]);
+  const [loading, setLoading] = useState(false);
   const { showToast } = useToast();
+
+  // 加载待审核列表
+  const loadPendingList = async () => {
+    setLoading(true);
+    try {
+      const data = await petService.getMyPendingList();
+      console.log('API返回数据:', data);
+      setPendingList(data);
+      console.log('设置后的pendingList:', pendingList);
+    } catch (error) {
+      console.error('获取待审核列表失败', error);
+    }
+    setLoading(false);
+  };
+
+  // 切换到列表标签时加载数据
+  useEffect(() => {
+    if (activeTab === 'list') {
+      loadPendingList();
+    }
+  }, [activeTab]);
 
   const handleSubmit = async (data: PetRegisterFormData) => {
     try {
@@ -39,10 +59,8 @@ export default function RegisterPage() {
         healthStatus: data.healthStatus,
       };
 
-      await petService.createPet(apiData);
+      await petService.submitPending(apiData);
 
-      // 存储到 mock 数据用于本地显示
-      mockPetData.push(data);
       showToast('宠物登记成功！', 'success');
       // 切换到列表视图
       setActiveTab('list');
@@ -126,7 +144,11 @@ export default function RegisterPage() {
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">
                   登记记录
                 </h2>
-                {mockPetData.length === 0 ? (
+                {loading ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500">加载中...</p>
+                  </div>
+                ) : pendingList.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">📭</div>
                     <p className="text-gray-500">暂无登记记录</p>
@@ -140,9 +162,9 @@ export default function RegisterPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {mockPetData.map((pet, index) => (
+                    {pendingList.map((pet) => (
                       <div
-                        key={index}
+                        key={pet.id}
                         className="p-4 rounded-lg border flex gap-4"
                         style={{ backgroundColor: TIFFANY_LIGHT, borderColor: TIFFANY_BLUE }}
                       >
@@ -165,19 +187,25 @@ export default function RegisterPage() {
                               {pet.name}
                               <span className="ml-2 text-sm text-gray-500">
                                 ({pet.species === 'dog' ? '🐕' : pet.species === 'cat' ? '🐱' : '🐾'}
-                                {pet.gender === 'male' ? '♂️' : '♀️'})
+                                {pet.gender === 1 ? '♂️' : '♀️'})
                               </span>
                             </h3>
-                            <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: '#FEF3C7', color: '#D97706' }}>
-                              待审核
+                            <span className="text-xs px-2 py-1 rounded" style={{
+                              backgroundColor: pet.status === 0 ? '#FEF3C7' : pet.status === 1 ? '#D1FAE5' : '#FEE2E2',
+                              color: pet.status === 0 ? '#D97706' : pet.status === 1 ? '#059669' : '#DC2626'
+                            }}>
+                              {pet.status === 0 ? '待审核' : pet.status === 1 ? '已通过' : '已拒绝'}
                             </span>
                           </div>
                           <p className="text-sm text-gray-600 mt-1">
-                            品种：{pet.breed || '未填写'} | 年龄：{pet.age}{pet.ageUnit === 'year' ? '岁' : '个月'} | 体重：{pet.weight}kg
+                            品种：{pet.breed || '未填写'} | 年龄：{pet.age}个月 | 体重：{pet.weight}kg
                           </p>
                           <p className="text-sm text-gray-600">
                             主人：{pet.ownerName} | 联系方式：{pet.ownerContact}
                           </p>
+                          {pet.status === 2 && pet.rejectReason && (
+                            <p className="text-sm text-red-500 mt-1">拒绝原因：{pet.rejectReason}</p>
+                          )}
                         </div>
                       </div>
                     ))}

@@ -176,6 +176,12 @@ export function Header() {
                     >
                       <span>❤️</span> 我的收藏
                     </button>
+                    <button
+                      onClick={() => { navigate('/pending-review'); setShowDropdown(false); }}
+                      className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <span>📋</span> 审核状态
+                    </button>
                     <div className="my-2 border-t border-gray-100" />
                     <button
                       onClick={handleLogout}

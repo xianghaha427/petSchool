@@ -30,4 +30,9 @@ public interface PetMapper extends BaseMapper<Pet> {
      * 根据 ID 查询宠物详情
      */
     Pet selectPetDetail(@Param("id") Long id);
+
+    /**
+     * 查询所有学号
+     */
+    java.util.List<String> selectAllStudentIds();
 }

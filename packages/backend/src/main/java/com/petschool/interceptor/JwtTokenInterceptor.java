@@ -30,6 +30,10 @@ public class JwtTokenInterceptor implements HandlerInterceptor{
         }
         //1.从请求头中获取令牌
         String token = request.getHeader(jwtProperties.getTokenName());
+        // 去除 Bearer 前缀
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
         //2.校验令牌
         try {
             log.info("jwt校验:{}", token);
@@ -41,6 +45,7 @@ public class JwtTokenInterceptor implements HandlerInterceptor{
             //3.通过，放行
             return true;
         }catch (Exception e){
+            log.error("JWT校验失败: {}", e.getMessage());
             response.setStatus(401);
             return false;
         }

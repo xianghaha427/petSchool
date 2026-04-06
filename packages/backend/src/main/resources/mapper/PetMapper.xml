@@ -68,4 +68,9 @@
         AND status = 1
     </select>
 
+    <!-- 查询所有学号 -->
+    <select id="selectAllStudentIds" resultType="java.lang.String">
+        SELECT student_id FROM pet WHERE student_id IS NOT NULL AND student_id != ''
+    </select>
+
 </mapper>

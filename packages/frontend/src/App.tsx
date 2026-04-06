@@ -14,6 +14,7 @@ import ProfilePage from '@/pages/ProfilePage'
 import MyPetsPage from '@/pages/MyPetsPage'
 import PetEditPage from '@/pages/PetEditPage'
 import FavoritesPage from '@/pages/FavoritesPage'
+import PendingReviewPage from '@/pages/PendingReviewPage'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -76,6 +77,11 @@ function App() {
           <Route path="/favorites" element={
             <ProtectedRoute>
               <FavoritesPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/pending-review" element={
+            <ProtectedRoute>
+              <PendingReviewPage />
             </ProtectedRoute>
           } />
         </Routes>

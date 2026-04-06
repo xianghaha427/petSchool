@@ -17,4 +17,9 @@ public class PetConstant {
     public static final String STATUS_PENDING = "pending";
     public static final String STATUS_APPROVED = "approved";
     public static final String STATUS_REJECTED = "rejected";
+
+    // 审核状态常量
+    public static final Integer PENDING_STATUS = 0;
+    public static final Integer APPROVED_STATUS = 1;
+    public static final Integer REJECTED_STATUS = 2;
 }

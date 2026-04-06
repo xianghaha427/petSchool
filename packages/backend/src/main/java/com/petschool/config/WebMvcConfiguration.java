@@ -21,7 +21,8 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
                 .excludePathPatterns("/users/login")
                 .excludePathPatterns("/users/register")
                 .excludePathPatterns("/carousel")
-                .excludePathPatterns("/pets")//放行宠物列表查询
-                .excludePathPatterns("/pets/*");//放行单个宠物查询
+                .excludePathPatterns("/pets");//放行宠物列表查询
+                // 注意：不要用 /pets/* 来排除，因为 /pets/pending 会被错误地排除
+                // /pets/pending/my 需要认证来获取 userId，不能排除
     }
 }

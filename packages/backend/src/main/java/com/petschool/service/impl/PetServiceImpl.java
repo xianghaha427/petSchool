@@ -10,6 +10,7 @@ import com.petschool.dto.PetPageDTO;
 import com.petschool.entity.Pet;
 import com.petschool.mapper.PetMapper;
 import com.petschool.service.PetService;
+import com.petschool.utils.StudentIdGenerator;
 import com.petschool.vo.PageVO;
 import com.petschool.vo.PetVO;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,9 @@ public class PetServiceImpl implements PetService {
 
     @Autowired
     private PetMapper petMapper;
+
+    @Autowired
+    private StudentIdGenerator studentIdGenerator;
 
     // 根据 ID 查询宠物
     @Override
@@ -130,6 +134,14 @@ public class PetServiceImpl implements PetService {
     @Override
     public void createPet(PetDTO petDTO, Long userId) {
         log.info("创建宠物，请求参数：{}", petDTO);
+
+        // 如果学号为空，自动生成学号
+        String studentId = petDTO.getStudentId();
+        if (!StringUtils.hasText(studentId)) {
+            studentId = studentIdGenerator.generateStudentId();
+            petDTO.setStudentId(studentId);
+            log.info("自动生成学号：{}", studentId);
+        }
 
         // 校验学号是否已存在
         Pet existPet = getbyStudentId(petDTO.getStudentId());

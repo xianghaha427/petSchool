@@ -88,9 +88,13 @@ export function PetRegisterForm({ onSubmit }: PetRegisterFormProps) {
   const handleFormSubmit = async (data: PetRegisterFormData) => {
     setIsSubmitting(true);
     try {
+      // 使用网络图片URL而不是base64编码数据
+      const photoUrl = photoPreview?.startsWith('data:')
+        ? 'https://www.quazero.com/uploads/allimg/140412/1-140412005948.jpg'
+        : (photoPreview || data.photoUrl || '');
       const finalData = {
         ...data,
-        photoUrl: photoPreview || data.photoUrl || '',
+        photoUrl,
       };
       await onSubmit(finalData);
       setSubmitSuccess(true);

@@ -108,6 +108,45 @@ export const petService = {
     const res = await apiClient.get<ApiResponse<boolean>>(`/favorites/check/${petId}`);
     return res.data;
   },
+
+  // ===== 待审核宠物登记 =====
+  // 提交待审核登记
+  submitPending: async (data: Partial<Pet>): Promise<void> => {
+    await apiClient.post('/pets/pending', data);
+  },
+
+  // 获取我的待审核列表
+  getMyPendingList: async (): Promise<PetPending[]> => {
+    const res = await apiClient.get<ApiResponse<PetPending[]>>('/pets/pending/my');
+    return res.data || [];
+  },
 };
+
+// 待审核宠物类型
+export interface PetPending {
+  id: number;
+  userId: number;
+  username?: string;
+  name: string;
+  species: string;
+  breed?: string;
+  age: number;
+  weight: number;
+  gender: number;
+  genderLabel?: string;
+  photoUrl: string;
+  description?: string;
+  ownerName?: string;
+  ownerContact?: string;
+  vaccinationDate?: string;
+  isVaccinated?: number;
+  isNeutered?: number;
+  healthStatus?: string;
+  status: number;
+  statusLabel?: string;
+  rejectReason?: string;
+  createTime?: string;
+  updateTime?: string;
+}
 
 export default petService;
