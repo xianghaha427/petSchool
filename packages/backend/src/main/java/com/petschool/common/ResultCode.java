@@ -20,7 +20,10 @@ public enum ResultCode {
     // 业务错误码
     PET_NOT_FOUND(1001, "宠物信息不存在"),
     STUDENT_ID_DUPLICATE(1002, "学号已存在"),
-    CAROUSEL_NOT_FOUND(1003, "轮播图不存在");
+    CAROUSEL_NOT_FOUND(1003, "轮播图不存在"),
+    AI_UNAVAILABLE(1004, "AI 服务暂时不可用，请手动填写"),
+    AI_RECOGNIZE_FAILED(1005, "AI 识别失败，请手动填写"),
+    FILE_UPLOAD_FAILED(1006, "图片上传失败");
 
     private final Integer code;
     private final String message;

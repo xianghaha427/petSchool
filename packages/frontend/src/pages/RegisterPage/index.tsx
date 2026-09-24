@@ -49,7 +49,7 @@ export default function RegisterPage() {
         age: data.ageUnit === 'year' ? data.age * 12 : data.age, // 转换为月
         weight: data.weight,
         gender: genderStringToNumber(data.gender),
-        photoUrl: data.photoUrl || '/images/pets/default.jpg',
+        photoUrl: data.photoUrl || '',
         description: data.description,
         ownerName: data.ownerName,
         ownerContact: data.ownerContact,
