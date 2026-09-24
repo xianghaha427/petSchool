@@ -17,6 +17,13 @@ spring:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
 
+  # 文件上传限制
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 6MB
+
 # MyBatis Plus 配置
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
@@ -48,3 +55,21 @@ pet:
     secret-key:  xiangxiangaihaha1234567890hahaaixiangxiang1234567890
     ttl: 86400000
     token-name: Authorization
+  # AI 能力配置：api-key 缺失时应用仍可正常启动，只是识别/简介接口返回 1004
+  ai:
+    api-key: ${DASHSCOPE_API_KEY:}
+    base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    chat-path: /chat/completions
+    vision-model: qwen3-vl-flash
+    text-model: qwen-plus
+    connect-timeout-ms: 3000
+    read-timeout-ms: 30000
+    max-image-bytes: 4194304
+    json-mode: false
+    mock: false
+    mock-delay-ms: 800
+  # 本地上传配置
+  upload:
+    dir: ./uploads
+    url-prefix: /api/uploads
+    max-bytes: 4194304

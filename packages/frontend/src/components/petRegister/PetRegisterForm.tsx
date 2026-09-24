@@ -1,8 +1,17 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import type { PetRegisterFormData } from '@/types/pet';
+import type { PetRecognitionResult } from '@/types/ai';
+import { AI_ERROR_CODES, AiServiceError } from '@/types/ai';
 import { useToast } from '@/components/ui/Toast';
+import { AiRecognizePanel } from './AiRecognizePanel';
+import type { AiRecognizeStatus } from './AiRecognizePanel';
+import { uploadPhoto } from '@/services/fileService';
+import { recognizePet, generateDescription } from '@/services/aiService';
+import { compressImage } from '@/utils/image';
+import { mapRecognitionToForm, ageToMonths, RECOGNITION_FIELD_LABELS } from '@/utils/aiMapping';
+import { genderStringToNumber } from '@/utils/petUtils';
 
 interface PetRegisterFormProps {
   onSubmit: (data: PetRegisterFormData) => Promise<void>;
@@ -22,13 +31,30 @@ export function PetRegisterForm({ onSubmit }: PetRegisterFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { showToast } = useToast();
 
+  // ===== AI 识别 / 照片上传相关状态 =====
+  const [recognizing, setRecognizing] = useState(false);
+  const [recognizeResult, setRecognizeResult] = useState<PetRecognitionResult | null>(null);
+  const [recognizeError, setRecognizeError] = useState<string | null>(null);
+  const [filledFields, setFilledFields] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
+  const [generatingDesc, setGeneratingDesc] = useState(false);
+  // 提交时可 await 的上传 Promise（用来拿到最终可用的照片 URL）
+  const uploadPromiseRef = useRef<Promise<string | null> | null>(null);
+  // 上一次已发起识别的原始 File，保证同一个 File 只识别一次，避免重复消耗 AI 额度
+  const lastProcessedFileRef = useRef<File | null>(null);
+  // 真正送去上传/识别的文件（压缩后的）
+  const processFileRef = useRef<File | null>(null);
+  // 处理轮次令牌：换照片/删照片后自增，用于丢弃过期请求的回写
+  const processTokenRef = useRef(0);
+
   const {
     register,
     handleSubmit,
     control,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, dirtyFields },
   } = useForm<PetRegisterFormData>({
     defaultValues: {
       species: 'dog',
@@ -41,6 +67,170 @@ export function PetRegisterForm({ onSubmit }: PetRegisterFormProps) {
 
   const species = watch('species');
   const isVaccinated = watch('isVaccinated');
+
+  // dirtyFields 的最新值镜像：识别是异步的（约 3~10 秒），
+  // 完成时闭包里捕获的 dirtyFields 可能已过期，直接用它判断会误覆盖用户刚手填的内容
+  const dirtyFieldsRef = useRef<Record<string, boolean | undefined>>({});
+  useEffect(() => {
+    dirtyFieldsRef.current = dirtyFields as unknown as Record<string, boolean | undefined>;
+  }, [dirtyFields]);
+
+  // 面板状态：识别中优先，其次有结果，再其次失败
+  const recognizeStatus: AiRecognizeStatus = recognizing
+    ? 'recognizing'
+    : recognizeResult
+      ? 'done'
+      : recognizeError
+        ? 'failed'
+        : 'idle';
+
+  // 后端业务错误的中文 message 优先展示，拿不到（网络错误等）再退回本地兜底文案
+  const backendMessageOf = (error: unknown): string =>
+    error instanceof AiServiceError ? error.message.trim() : '';
+
+  // AI 失败/没帮上忙的统一收尾（面板 failed 态 + 温和 info 提示）
+  const setRecognizeFailed = (message: string) => {
+    setRecognizeResult(null);
+    setFilledFields([]);
+    setRecognizeError(message);
+    showToast(message, 'info');
+  };
+
+  // AI 没帮上忙（1004/1005）不算"错误"，统一走温和的 info 提示，不用 error 红字。
+  // 文案优先用后端返回的中文 message，拿不到（网络错误等）再退回本地兜底文案。
+  const handleRecognizeFailure = (error: unknown) => {
+    const isBusinessError = error instanceof AiServiceError;
+    const fallback =
+      isBusinessError && error.code === AI_ERROR_CODES.RECOGNIZE_FAILED
+        ? 'AI 没能识别出宠物，请手动填写或换一张照片'
+        : 'AI 暂时不可用，请手动填写';
+    setRecognizeFailed(backendMessageOf(error) || fallback);
+  };
+
+  // 把识别结果写回表单；用户已手动填过的字段不覆盖
+  const applyRecognition = (result: PetRecognitionResult) => {
+    if (!result.isPet) {
+      setRecognizeFailed('AI 没能识别出宠物，请手动填写或换一张照片');
+      return;
+    }
+
+    const { values } = mapRecognitionToForm(result);
+    const dirty = dirtyFieldsRef.current;
+    const appliedKeys: string[] = [];
+
+    if (values.species !== undefined && !dirty.species) {
+      setValue('species', values.species, { shouldDirty: false, shouldValidate: true });
+      appliedKeys.push('species');
+    }
+    if (values.breed !== undefined && !dirty.breed) {
+      setValue('breed', values.breed, { shouldDirty: false, shouldValidate: true });
+      appliedKeys.push('breed');
+    }
+    if (values.gender !== undefined && !dirty.gender) {
+      setValue('gender', values.gender, { shouldDirty: false, shouldValidate: true });
+      appliedKeys.push('gender');
+    }
+    // 用户填过年龄或改过单位就都不动，避免把"3 个月"改成"3 岁"
+    if (values.age !== undefined && !dirty.age && !dirty.ageUnit) {
+      setValue('age', values.age, { shouldDirty: false, shouldValidate: true });
+      appliedKeys.push('age');
+      if (values.ageUnit !== undefined) {
+        setValue('ageUnit', values.ageUnit, { shouldDirty: false, shouldValidate: true });
+        appliedKeys.push('ageUnit');
+      }
+    }
+
+    setRecognizeResult(result);
+    setRecognizeError(null);
+    setFilledFields(
+      Array.from(new Set(appliedKeys.map((key) => RECOGNITION_FIELD_LABELS[key]).filter(Boolean)))
+    );
+  };
+
+  // 上传照片（可单独重试）
+  const runUpload = (file: File, token: number) => {
+    setUploading(true);
+    const task = uploadPhoto(file)
+      .then((result) => {
+        // 期间用户换/删了照片，丢弃这次结果
+        if (processTokenRef.current !== token) return null;
+        setUploadedUrl(result.url);
+        return result.url;
+      })
+      .catch((error) => {
+        console.error('照片上传失败:', error);
+        if (processTokenRef.current === token) {
+          showToast(backendMessageOf(error) || '照片上传失败，可重试或直接提交', 'info');
+        }
+        return null;
+      })
+      .finally(() => {
+        if (processTokenRef.current === token) setUploading(false);
+      });
+    uploadPromiseRef.current = task;
+    return task;
+  };
+
+  // AI 识别（可单独重试）
+  const runRecognize = (file: File, token: number) => {
+    setRecognizing(true);
+    setRecognizeError(null);
+    return recognizePet(file)
+      .then((result) => {
+        if (processTokenRef.current !== token) return null;
+        applyRecognition(result);
+        return result;
+      })
+      .catch((error) => {
+        if (processTokenRef.current !== token) return null;
+        handleRecognizeFailure(error);
+        return null;
+      })
+      .finally(() => {
+        if (processTokenRef.current === token) setRecognizing(false);
+      });
+  };
+
+  // 压缩后并发发起"上传"和"识别"，两者各自软失败，互不影响
+  const startProcessPhoto = async (file: File, token: number) => {
+    // 压缩失败时 compressImage 会原样返回原文件，不会抛错，因此不会阻断流程
+    const compressed = await compressImage(file);
+    if (processTokenRef.current !== token) return;
+    processFileRef.current = compressed;
+    void runUpload(compressed, token);
+    void runRecognize(compressed, token);
+  };
+
+  // 失败重试：缺照片就补上传，同时重试识别
+  const handleRetry = () => {
+    const file = processFileRef.current;
+    if (!file) {
+      showToast('请重新选择照片后再试', 'info');
+      return;
+    }
+    const token = processTokenRef.current;
+    if (!uploadedUrl && !uploading) void runUpload(file, token);
+    void runRecognize(file, token);
+  };
+
+  // 仅重试上传
+  const handleRetryUpload = () => {
+    const file = processFileRef.current;
+    if (!file) return;
+    void runUpload(file, processTokenRef.current);
+  };
+
+  // 重置所有与照片相关的状态（换照片 / 删除照片时）
+  const resetPhotoState = () => {
+    processTokenRef.current += 1;
+    uploadPromiseRef.current = null;
+    processFileRef.current = null;
+    setUploading(false);
+    setUploadedUrl(null);
+    setRecognizeResult(null);
+    setRecognizeError(null);
+    setFilledFields([]);
+  };
 
   // 处理图片选择
   const handlePhotoChange = (file: File | null) => {
@@ -58,12 +248,49 @@ export function PetRegisterForm({ onSubmit }: PetRegisterFormProps) {
       return;
     }
 
+    // 即时预览（保持原有体验）
     setPhotoFile(file);
     const reader = new FileReader();
     reader.onload = (e) => {
       setPhotoPreview(e.target?.result as string);
     };
     reader.readAsDataURL(file);
+
+    // 同一个 File 只识别一次，防止 onChange 抖动导致重复调用烧掉 AI 额度
+    if (lastProcessedFileRef.current === file) return;
+    lastProcessedFileRef.current = file;
+
+    resetPhotoState();
+    const token = processTokenRef.current;
+    void startProcessPhoto(file, token);
+  };
+
+  // 用当前已填信息生成简介
+  const handleGenerateDescription = async () => {
+    setGeneratingDesc(true);
+    try {
+      const gender = watch('gender');
+      const text = await generateDescription({
+        name: watch('name') || undefined,
+        species: watch('species') || undefined,
+        breed: watch('breed') || undefined,
+        ageMonths: ageToMonths(watch('age'), watch('ageUnit')),
+        gender: gender ? genderStringToNumber(gender) : undefined,
+        color: recognizeResult?.color || undefined,
+        keywords: watch('description') || undefined,
+      });
+
+      if (text) {
+        setValue('description', text, { shouldDirty: true, shouldValidate: true });
+      } else {
+        showToast('AI 没能生成简介，请手动填写', 'info');
+      }
+    } catch (error) {
+      console.error('生成简介失败:', error);
+      showToast(backendMessageOf(error) || 'AI 暂时不可用，请手动填写简介', 'info');
+    } finally {
+      setGeneratingDesc(false);
+    }
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -88,13 +315,14 @@ export function PetRegisterForm({ onSubmit }: PetRegisterFormProps) {
   const handleFormSubmit = async (data: PetRegisterFormData) => {
     setIsSubmitting(true);
     try {
-      // 使用网络图片URL而不是base64编码数据
-      const photoUrl = photoPreview?.startsWith('data:')
-        ? 'https://www.quazero.com/uploads/allimg/140412/1-140412005948.jpg'
-        : (photoPreview || data.photoUrl || '');
+      // 使用真实上传返回的 URL；若上传还在进行中就等它结束
+      let photoUrl = uploadedUrl;
+      if (!photoUrl && uploadPromiseRef.current) {
+        photoUrl = await uploadPromiseRef.current;
+      }
       const finalData = {
         ...data,
-        photoUrl,
+        photoUrl: photoUrl || data.photoUrl || '',
       };
       await onSubmit(finalData);
       setSubmitSuccess(true);
@@ -167,6 +395,8 @@ export function PetRegisterForm({ onSubmit }: PetRegisterFormProps) {
                 onClick={() => {
                   setPhotoPreview(null);
                   setPhotoFile(null);
+                  lastProcessedFileRef.current = null;
+                  resetPhotoState();
                   if (fileInputRef.current) fileInputRef.current.value = '';
                 }}
                 className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
@@ -190,6 +420,38 @@ export function PetRegisterForm({ onSubmit }: PetRegisterFormProps) {
             </div>
           )}
         </div>
+
+        {/* 照片上传状态 */}
+        {photoFile && uploading && (
+          <p className="mt-3 text-sm text-gray-500">照片上传中…</p>
+        )}
+        {photoFile && !uploading && uploadedUrl && (
+          <p className="mt-3 text-sm" style={{ color: TIFFANY_BLUE_DARK }}>
+            照片已上传 ✓
+          </p>
+        )}
+        {photoFile && !uploading && !uploadedUrl && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+            <span className="text-amber-700">照片上传失败，提交时将不带照片</span>
+            <button
+              type="button"
+              onClick={handleRetryUpload}
+              className="text-xs px-2.5 py-1 rounded-lg font-medium bg-white"
+              style={{ color: TIFFANY_BLUE_DARK, border: `1px solid ${TIFFANY_BLUE}` }}
+            >
+              重新上传
+            </button>
+          </div>
+        )}
+
+        {/* AI 识别结果 / 状态 */}
+        <AiRecognizePanel
+          status={recognizeStatus}
+          result={recognizeResult}
+          filledFields={filledFields}
+          errorMessage={recognizeError || undefined}
+          onRetry={handleRetry}
+        />
       </section>
 
       {/* 基本信息 */}
@@ -345,9 +607,24 @@ export function PetRegisterForm({ onSubmit }: PetRegisterFormProps) {
 
         {/* 简介 */}
         <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            简介
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-sm font-medium text-gray-700">
+              简介
+            </label>
+            <button
+              type="button"
+              onClick={handleGenerateDescription}
+              disabled={generatingDesc}
+              className="text-xs px-2.5 py-1 rounded-lg font-medium transition-opacity disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
+              style={{
+                backgroundColor: TIFFANY_LIGHT,
+                color: TIFFANY_BLUE_DARK,
+                border: `1px solid ${TIFFANY_BLUE}`,
+              }}
+            >
+              {generatingDesc ? '生成中…' : '✨ AI 生成'}
+            </button>
+          </div>
           <textarea
             {...register('description')}
             rows={2}
