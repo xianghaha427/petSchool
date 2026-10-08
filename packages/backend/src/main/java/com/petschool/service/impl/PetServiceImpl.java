@@ -3,6 +3,7 @@ package com.petschool.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.petschool.common.ResultCode;
 import com.petschool.common.constant.PetConstant;
 import com.petschool.common.exception.BusinessException;
 import com.petschool.dto.PetDTO;
@@ -146,7 +147,7 @@ public class PetServiceImpl implements PetService {
         // 校验学号是否已存在
         Pet existPet = getbyStudentId(petDTO.getStudentId());
         if (existPet != null) {
-            throw new RuntimeException("学号已存在");
+            throw new BusinessException(ResultCode.STUDENT_ID_DUPLICATE);
         }
 
         // 创建宠物
@@ -169,7 +170,7 @@ public class PetServiceImpl implements PetService {
         // 校验宠物是否存在
         Pet existPet = petMapper.selectById(petId);
         if (existPet == null) {
-            throw new RuntimeException("宠物不存在");
+            throw new BusinessException(ResultCode.PET_NOT_FOUND);
         }
 
         // 更新宠物
@@ -187,7 +188,7 @@ public class PetServiceImpl implements PetService {
         // 校验宠物是否存在
         Pet existPet = petMapper.selectById(petId);
         if (existPet == null) {
-            throw new RuntimeException("宠物不存在");
+            throw new BusinessException(ResultCode.PET_NOT_FOUND);
         }
 
         // 逻辑删除（设置状态为禁用）

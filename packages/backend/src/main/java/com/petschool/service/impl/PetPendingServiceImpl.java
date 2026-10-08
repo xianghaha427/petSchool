@@ -1,6 +1,7 @@
 package com.petschool.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.petschool.common.ResultCode;
 import com.petschool.common.constant.PetConstant;
 import com.petschool.common.exception.BusinessException;
 import com.petschool.dto.PetDTO;
@@ -103,9 +104,16 @@ public class PetPendingServiceImpl implements PetPendingService {
         // 生成学号
         String studentId = studentIdGenerator.generateStudentId();
 
+        // 学号唯一性兜底，避免撞 uk_student_id 唯一索引时报 500
+        if (petMapper.selectByStudentId(studentId) != null) {
+            throw new BusinessException(ResultCode.STUDENT_ID_DUPLICATE);
+        }
+
         // 转换为正式宠物记录
         Pet pet = new Pet();
         BeanUtils.copyProperties(pending, pet);
+        // copyProperties 会把 pending.id 一并拷过来，必须清空，否则会与 pet 表已有主键冲突
+        pet.setId(null);
         pet.setStudentId(studentId);
         pet.setStatus(PetConstant.ENABLE);
         pet.setCreateTime(LocalDateTime.now());
@@ -115,9 +123,11 @@ public class PetPendingServiceImpl implements PetPendingService {
         petMapper.insert(pet);
         log.info("宠物登记已通过审核，生成学号={}，petId={}", studentId, pet.getId());
 
-        // 删除待审核记录
-        petPendingMapper.deleteById(pendingId);
-        log.info("删除待审核记录，pendingId={}", pendingId);
+        // 标记待审核记录为已通过（保留记录，不删除）
+        pending.setStatus(PetConstant.APPROVED_STATUS);
+        pending.setUpdateTime(LocalDateTime.now());
+        petPendingMapper.updateById(pending);
+        log.info("待审核记录已标记为已通过，pendingId={}", pendingId);
     }
 
     @Override

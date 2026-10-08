@@ -43,6 +43,22 @@ export function genderNumberToString(gender: number): 'male' | 'female' {
 }
 
 /**
+ * 把库里的历史写法归一到表单/接口统一使用的 dog / cat / other。
+ *
+ * 早期手工登记的数据存的是中文「狗」「猫」，后来登记表单和 AI 识别统一成了
+ * dog/cat，库里因此一度两种写法并存。这里只负责把已知的中文别名映射过去，
+ * 认不出来的值原样返回——不擅自改写成 other，免得把兔子之类静默标错。
+ */
+export function normalizeSpeciesValue(species: string | undefined): string {
+  if (!species) return '';
+  const v = species.trim().toLowerCase();
+  if (v === 'dog' || v === '狗' || v === '犬') return 'dog';
+  if (v === 'cat' || v === '猫') return 'cat';
+  if (v === 'other' || v === '其他' || v === '其它') return 'other';
+  return species;
+}
+
+/**
  * 获取物种 emoji
  */
 export function getSpeciesEmoji(species: string | undefined): string {

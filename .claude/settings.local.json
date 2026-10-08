@@ -12,7 +12,8 @@
       "Bash(where mvn:*)",
       "mcp__fetch__imageFetch",
       "Bash(mvn dependency:tree -lombok)",
-      "WebFetch(domain:minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com)"
+      "WebFetch(domain:minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com)",
+      "Bash(claude --worktree feature-auth)"
     ]
   }
 }

@@ -94,3 +94,51 @@ INSERT INTO `pet` (`student_id`, `name`, `species`, `breed`, `age`, `weight`, `g
 ('P20240003', '小黑', '狗', '拉布拉多', 36, 28.0, 1, '/images/pets/xiaohei.jpg', '忠诚的拉布拉多', '王五', '13800138003', 1, '2023-12-10', 0, '健康', 1),
 ('P20240004', '小白', '猫', '英短', 24, 5.0, 1, '/images/pets/xiaobai.jpg', '高冷的英短少爷', '赵六', '13800138004', 0, NULL, 0, '需要补种疫苗', 1),
 ('P20240005', '豆豆', '狗', '泰迪', 12, 3.5, 2, '/images/pets/doudou.jpg', '聪明的泰迪宝宝', '钱七', '13800138005', 1, '2024-03-01', 0, '健康', 1);
+
+-- ============================================================
+-- 校园活动（2026-09 新增）
+--
+-- ⚠️ 再次提醒：本文件**只是文档，不是数据源**。按项目规则，数据库结构一律以
+-- 直连真实库的 SHOW TABLES / DESCRIBE 结果为准——本文件已经和真实库脱节过
+-- （pet_pending 表真实存在却从未写进这里）。以下 DDL 与真实库一致，
+-- 是为了让下一个读代码的人不必再去连库确认，不代表可以直接执行本文件重建库。
+-- ============================================================
+
+CREATE TABLE `activity` (
+  `id`             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `title`          VARCHAR(128)    NOT NULL                COMMENT '活动标题',
+  `description`    VARCHAR(512)    DEFAULT NULL            COMMENT '活动简介',
+  `location`       VARCHAR(128)    NOT NULL                COMMENT '活动地点',
+  `start_time`     DATETIME        NOT NULL                COMMENT '开始时间',
+  `end_time`       DATETIME        NOT NULL                COMMENT '结束时间',
+  `cover_url`      VARCHAR(512)    DEFAULT NULL            COMMENT '封面图URL，为空时前端用主题渐变兜底',
+  `theme`          VARCHAR(16)     NOT NULL DEFAULT 'teal' COMMENT '卡片配色主题键（teal/orange/pink/blue/red/purple），注意不是 Tailwind 类名',
+  `status`         TINYINT         NOT NULL DEFAULT 1      COMMENT '0-已下架,1-正常',
+  `create_user_id` BIGINT UNSIGNED DEFAULT NULL            COMMENT '创建人（管理员）ID',
+  `create_time`    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time`    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_start_time` (`start_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='校园活动表';
+-- 注意：本表刻意没有 `deleted` 列。application.yml 全局配了
+-- logic-delete-field: deleted，实体里一旦出现同名字段，MyBatis-Plus 会立刻
+-- 开启逻辑删除，所有查询会被悄悄加上 deleted=0。软删除沿用 `status` 手写。
+
+CREATE TABLE `activity_signup` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `activity_id` BIGINT UNSIGNED NOT NULL                COMMENT '活动ID',
+  `user_id`     BIGINT UNSIGNED NOT NULL                COMMENT '报名用户ID',
+  `pet_name`    VARCHAR(64)     NOT NULL                COMMENT '宠物姓名',
+  `owner_name`  VARCHAR(64)     NOT NULL                COMMENT '主人姓名',
+  `phone`       VARCHAR(32)     NOT NULL                COMMENT '手机号',
+  `email`       VARCHAR(128)    DEFAULT NULL            COMMENT '邮箱',
+  `note`        VARCHAR(256)    DEFAULT NULL            COMMENT '备注',
+  `create_time` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_activity_user` (`activity_id`, `user_id`),
+  KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='活动报名表';
+-- uk_activity_user 是防重复报名的**真正防线**：service 层的前置查重只为给出
+-- 友好文案，并发下两个请求可能同时通过，唯一键才拦得住（冲突翻译成业务码 1010）。
+-- 取消报名是物理删除（与 favorite 取消收藏一致），不保留历史报名记录。

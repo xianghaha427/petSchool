@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { petService, Pet } from '@/services/petService';
 import { TIFFY_BLUE, TIFFY_BLUE_DARK, TIFFY_LIGHT } from '@/styles/theme';
+import { normalizeSpeciesValue } from '@/utils/petUtils';
 
 const TIFFANY_BLUE = TIFFY_BLUE;
 const TIFFANY_BLUE_DARK = TIFFY_BLUE_DARK;
@@ -42,7 +43,9 @@ export default function PetEditPage() {
       setPet(data);
       setFormData({
         name: data.name || '',
-        species: data.species || '',
+        // 归一化后再填进表单：下拉框的选项是 dog/cat/other，
+        // 若直接把历史的中文值塞进去，select 找不到匹配项会显示成空白
+        species: normalizeSpeciesValue(data.species),
         breed: data.breed || '',
         age: data.age || 0,
         weight: Number(data.weight) || 0,
@@ -152,9 +155,12 @@ export default function PetEditPage() {
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
-                  <option value="狗">🐕 狗</option>
-                  <option value="猫">🐱 猫</option>
-                  <option value="其他">其他</option>
+                  {/* 必须与登记表单、AI 识别、库里的编码保持一致（dog/cat/other）。
+                      这里以前是中文，打开一只 species='dog' 的宠物时
+                      select 匹配不到选项会显示空白，一保存又把中文写回库里。 */}
+                  <option value="dog">🐕 狗</option>
+                  <option value="cat">🐱 猫</option>
+                  <option value="other">其他</option>
                 </select>
               </div>
 
@@ -211,13 +217,16 @@ export default function PetEditPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">照片URL</label>
+              {/* 必须用 text 而不是 url：登记/上传后这里存的是 /api/uploads/xxx.jpg、
+                  /images/pets/2.jpg 这类相对路径，type="url" 的原生校验只接受绝对
+                  URL，会直接阻止整个表单提交 */}
               <input
-                type="url"
+                type="text"
                 name="photoUrl"
                 value={formData.photoUrl}
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="https://..."
+                placeholder="/api/uploads/xxx.jpg 或 https://..."
               />
             </div>
 

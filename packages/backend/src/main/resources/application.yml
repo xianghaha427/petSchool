@@ -17,6 +17,13 @@ spring:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
 
+  # 文件上传限制
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 6MB
+
 # MyBatis Plus 配置
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
@@ -48,3 +55,23 @@ pet:
     secret-key:  xiangxiangaihaha1234567890hahaaixiangxiang1234567890
     ttl: 86400000
     token-name: Authorization
+  # 本地上传配置
+  upload:
+    dir: ./uploads
+    # 注意：url-prefix 里含 context-path(/api)，改 context-path 时必须同步改这里
+    url-prefix: /api/uploads
+    # 与前端校验、spring.servlet.multipart.max-file-size 保持同一个 5MB 边界
+    max-bytes: 5242880
+  # AI 识别配置（通义千问 / DashScope，OpenAI 兼容模式）
+  ai:
+    # API Key 只从环境变量注入，绝不写死在本文件里（本文件会进 git）。
+    # 未配置时应用照常启动，AI 接口返回 1004「AI 服务暂时不可用」，用户手动填写即可。
+    api-key: ${DASHSCOPE_API_KEY:}
+    base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    # 识图用多模态模型，生成简介用文本模型
+    vision-model: qwen3-vl-flash
+    text-model: qwen-plus
+    # 与图片上传共用同一个 5MB 边界（前端校验、multipart 上限也都是 5MB）
+    max-image-bytes: 5242880
+    # 置 true 则不联网、不消耗额度，改用 MockAiClient 返回模拟识别结果
+    mock: false

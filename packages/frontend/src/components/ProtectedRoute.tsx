@@ -3,9 +3,11 @@ import { useState, useEffect } from 'react'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
+  /** 是否要求管理员身份（role=1）。仅用于前端入口收敛，真正的权限判定在后端 */
+  requireAdmin?: boolean
 }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [checked, setChecked] = useState(false)
 
@@ -29,6 +31,11 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   if (!isAuthenticated) {
     // 未登录，跳转到登录页
     return <Navigate to="/login" replace />
+  }
+
+  // 要求管理员但当前账号不是管理员，回首页
+  if (requireAdmin && localStorage.getItem('role') !== '1') {
+    return <Navigate to="/" replace />
   }
 
   return <>{children}</>

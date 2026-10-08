@@ -4,7 +4,7 @@ import { PetRegisterForm } from '@/components/petRegister/PetRegisterForm';
 import { petService, PetPending } from '@/services/petService';
 import { useToast } from '@/components/ui/Toast';
 import type { PetRegisterFormData } from '@/types/pet';
-import { genderStringToNumber } from '@/utils/petUtils';
+import { genderStringToNumber, getSpeciesEmoji } from '@/utils/petUtils';
 
 // 蒂芙尼色主题
 const TIFFANY_BLUE = '#81C7D4';
@@ -40,16 +40,16 @@ export default function RegisterPage() {
 
   const handleSubmit = async (data: PetRegisterFormData) => {
     try {
-      // 转换表单数据为 API 格式
+      // 转换表单数据为 API 格式（学号由后端在审核通过时统一生成，前端不传）
       const apiData = {
         name: data.name,
-        studentId: data.studentId,
         species: data.species,
         breed: data.breed,
         age: data.ageUnit === 'year' ? data.age * 12 : data.age, // 转换为月
         weight: data.weight,
         gender: genderStringToNumber(data.gender),
-        photoUrl: data.photoUrl || '/images/pets/default.jpg',
+        // 照片地址由登记表单的上传接口给出，这里不再兜底一张不存在的图
+        photoUrl: data.photoUrl || '',
         description: data.description,
         ownerName: data.ownerName,
         ownerContact: data.ownerContact,
@@ -68,6 +68,9 @@ export default function RegisterPage() {
     } catch (error) {
       console.error('提交失败:', error);
       showToast(error instanceof Error ? error.message : '提交失败，请稍后重试', 'error');
+      // 必须往外抛：否则 PetRegisterForm 里的 await 会当成成功，
+      // 于是接口明明失败了却显示"登记成功！"页面。
+      throw error;
     }
   };
 
@@ -186,7 +189,7 @@ export default function RegisterPage() {
                             <h3 className="font-medium text-gray-800">
                               {pet.name}
                               <span className="ml-2 text-sm text-gray-500">
-                                ({pet.species === 'dog' ? '🐕' : pet.species === 'cat' ? '🐱' : '🐾'}
+                                ({getSpeciesEmoji(pet.species)}
                                 {pet.gender === 1 ? '♂️' : '♀️'})
                               </span>
                             </h3>

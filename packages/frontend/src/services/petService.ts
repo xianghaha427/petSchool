@@ -1,5 +1,5 @@
 import apiClient from './apiClient';
-import type { Pet, CarouselImage, ApiResponse, PaginatedResponse } from '@/types/pet';
+import type { Pet, CarouselImage, ApiResponse, PageVO } from '@/types/pet';
 
 // 搜索筛选参数
 export interface PetSearchParams {
@@ -18,7 +18,7 @@ export interface PetSearchParams {
 
 export const petService = {
   // 获取宠物列表（带搜索筛选）
-  getPets: async (params: PetSearchParams = {}): Promise<PaginatedResponse<Pet>> => {
+  getPets: async (params: PetSearchParams = {}): Promise<ApiResponse<PageVO<Pet>>> => {
     const searchParams = new URLSearchParams();
     if (params.pageNum) searchParams.append('pageNum', String(params.pageNum));
     if (params.pageSize) searchParams.append('pageSize', String(params.pageSize));

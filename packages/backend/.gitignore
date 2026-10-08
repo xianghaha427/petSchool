@@ -35,5 +35,8 @@ build/
 ### Logs ###
 *.log
 
+### 用户上传的图片（pet.upload.dir 默认 ./uploads）###
+/uploads/
+
 ### OS ###
 .DS_Store

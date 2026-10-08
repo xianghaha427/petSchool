@@ -1,48 +1,89 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-interface Activity {
-  id: number;
-  title: string;
-  date: string;
-  time: string;
-  location: string;
-  color: string;
-}
+import { canRegister, formatActivityDate, getActivityStatus } from '@/utils/activityStatus';
+import { activityGradient } from '@/utils/activityTheme';
+import { activityService } from '@/services/activityService';
+import type { Activity } from '@/types/activity';
 
 interface ActivityRegisterModalProps {
   activity: Activity | null;
   isOpen: boolean;
   onClose: () => void;
+  /** 报名成功后的回调，由首页用来刷新列表与报名状态 */
+  onSuccess?: () => void | Promise<void>;
 }
 
-export function ActivityRegisterModal({ activity, isOpen, onClose }: ActivityRegisterModalProps) {
-  const [formData, setFormData] = useState({
-    petName: '',
-    ownerName: '',
-    phone: '',
-    email: '',
-    note: '',
-  });
+const EMPTY_FORM = { petName: '', ownerName: '', phone: '', email: '', note: '' };
+
+/** 优先取后端返回的中文 message（业务失败时 apiClient 已把 code!=200 转成 ApiError） */
+function errorMessageOf(error: unknown): string {
+  const err = error as { response?: { data?: { message?: string } }; message?: string };
+  return err?.response?.data?.message || err?.message || '报名失败，请稍后重试';
+}
+
+export function ActivityRegisterModal({
+  activity,
+  isOpen,
+  onClose,
+  onSuccess,
+}: ActivityRegisterModalProps) {
+  const [formData, setFormData] = useState(EMPTY_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const resetAndClose = () => {
+    onClose();
+    setIsSuccess(false);
+    setErrorMessage(null);
+    setFormData(EMPTY_FORM);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!activity) return;
+
+    // 兜底：卡片上的按钮已经挡住了过期活动，但提交路径自己也要把住门，
+    // 否则一旦别处再调用这个弹窗，过期活动照样能"报名成功"。
+    // 后端 1009 是第二道防线（真正的判定在服务端）。
+    if (!canRegister(getActivityStatus(activity.startAt, activity.endAt))) {
+      resetAndClose();
+      return;
+    }
+
     setIsSubmitting(true);
+    setErrorMessage(null);
 
-    // 模拟提交
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      await activityService.signup(activity.id, {
+        petName: formData.petName.trim(),
+        ownerName: formData.ownerName.trim(),
+        phone: formData.phone.trim(),
+        // 空串是表单默认值，转成 undefined 让后端 @Email 不必面对空串
+        email: formData.email.trim() || undefined,
+        note: formData.note.trim() || undefined,
+      });
 
-    setIsSubmitting(false);
-    setIsSuccess(true);
+      await onSuccess?.();
+      setIsSuccess(true);
 
-    setTimeout(() => {
-      onClose();
-      setIsSuccess(false);
-      setFormData({ petName: '', ownerName: '', phone: '', email: '', note: '' });
-    }, 2000);
+      setTimeout(() => {
+        resetAndClose();
+      }, 2000);
+    } catch (error) {
+      // 后端的中文提示（如「你已报名该活动」「活动已开始或已结束，无法报名」）
+      // 直接展示在表单里，比一个 toast 更容易被看到
+      console.error('活动报名失败', error);
+      setErrorMessage(errorMessageOf(error));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  // 渐变色从主题键映射而来，与首页卡片同一份定义。
+  // （原先这里用 activity.color.split(' ') 去猜十六进制色值，就为了给内联 style 用；
+  //  现在直接用完整类名，猜测逻辑整段删除。）
+  const gradient = activityGradient(activity?.theme);
 
   return (
     <AnimatePresence>
@@ -54,7 +95,7 @@ export function ActivityRegisterModal({ activity, isOpen, onClose }: ActivityReg
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={onClose}
+            onClick={resetAndClose}
           />
 
           {/* Modal */}
@@ -66,9 +107,9 @@ export function ActivityRegisterModal({ activity, isOpen, onClose }: ActivityReg
           >
             <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
               {/* Header */}
-              <div className={`relative p-6 bg-gradient-to-r ${activity.color} text-white`}>
+              <div className={`relative p-6 bg-gradient-to-r ${gradient} text-white`}>
                 <button
-                  onClick={onClose}
+                  onClick={resetAndClose}
                   className="absolute top-4 right-4 p-1 rounded-full hover:bg-white/20 transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,8 +119,8 @@ export function ActivityRegisterModal({ activity, isOpen, onClose }: ActivityReg
                 <h2 className="text-2xl font-bold mb-1">活动报名</h2>
                 <p className="opacity-90">{activity.title}</p>
                 <div className="mt-3 flex items-center gap-4 text-sm opacity-80">
-                  <span>{activity.date}</span>
-                  <span>{activity.time}</span>
+                  <span>{formatActivityDate(activity.startAt, activity.endAt).date}</span>
+                  <span>{formatActivityDate(activity.startAt, activity.endAt).time}</span>
                   <span>{activity.location}</span>
                 </div>
               </div>
@@ -105,6 +146,7 @@ export function ActivityRegisterModal({ activity, isOpen, onClose }: ActivityReg
                       <input
                         type="text"
                         required
+                        maxLength={64}
                         value={formData.petName}
                         onChange={(e) => setFormData({ ...formData, petName: e.target.value })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
@@ -119,6 +161,7 @@ export function ActivityRegisterModal({ activity, isOpen, onClose }: ActivityReg
                       <input
                         type="text"
                         required
+                        maxLength={64}
                         value={formData.ownerName}
                         onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
@@ -133,6 +176,7 @@ export function ActivityRegisterModal({ activity, isOpen, onClose }: ActivityReg
                       <input
                         type="tel"
                         required
+                        maxLength={32}
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
@@ -146,6 +190,7 @@ export function ActivityRegisterModal({ activity, isOpen, onClose }: ActivityReg
                       </label>
                       <input
                         type="email"
+                        maxLength={128}
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
@@ -159,6 +204,7 @@ export function ActivityRegisterModal({ activity, isOpen, onClose }: ActivityReg
                       </label>
                       <textarea
                         rows={3}
+                        maxLength={256}
                         value={formData.note}
                         onChange={(e) => setFormData({ ...formData, note: e.target.value })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none"
@@ -166,21 +212,20 @@ export function ActivityRegisterModal({ activity, isOpen, onClose }: ActivityReg
                       />
                     </div>
 
+                    {/* 后端返回的失败原因（重复报名 / 报名窗口已关等） */}
+                    {errorMessage && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-red-600 text-sm">{errorMessage}</p>
+                      </div>
+                    )}
+
                     <div className="pt-4">
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className={`w-full py-3 rounded-xl font-semibold text-white shadow-lg transition-all disabled:opacity-50 ${
+                        className={`w-full py-3 rounded-xl font-semibold text-white shadow-lg transition-all disabled:opacity-50 bg-gradient-to-r ${gradient} ${
                           isSubmitting ? '' : 'hover:shadow-xl hover:-translate-y-0.5'
                         }`}
-                        style={{ background: `linear-gradient(to right, var(--tw-gradient-stops))`, backgroundImage: `linear-gradient(to right, var(--tw-gradient-from), var(--tw-gradient-to))` }}
-                        onMouseEnter={(e) => {
-                          const colors = activity.color.split(' ');
-                          if (colors[1]) {
-                            const colorValue = colors[1].replace('to-', '#');
-                            e.currentTarget.style.background = `linear-gradient(to right, ${colorValue.includes('orange') ? '#f97316' : colorValue.includes('pink') ? '#ec4899' : '#14b8a6'}, ${colorValue.includes('amber') ? '#f59e0b' : colorValue.includes('rose') ? '#f43f5e' : '#06b6d4'})`;
-                          }
-                        }}
                       >
                         {isSubmitting ? '提交中...' : '确认报名'}
                       </button>

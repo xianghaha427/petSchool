@@ -15,6 +15,8 @@ import MyPetsPage from '@/pages/MyPetsPage'
 import PetEditPage from '@/pages/PetEditPage'
 import FavoritesPage from '@/pages/FavoritesPage'
 import PendingReviewPage from '@/pages/PendingReviewPage'
+import AdminPendingPage from '@/pages/AdminPendingPage'
+import CreateActivityPage from '@/pages/CreateActivityPage'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -82,6 +84,16 @@ function App() {
           <Route path="/pending-review" element={
             <ProtectedRoute>
               <PendingReviewPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/pending" element={
+            <ProtectedRoute requireAdmin>
+              <AdminPendingPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/activities/new" element={
+            <ProtectedRoute requireAdmin>
+              <CreateActivityPage />
             </ProtectedRoute>
           } />
         </Routes>

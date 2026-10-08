@@ -72,10 +72,13 @@ export default function PetsPage() {
               onChange={(e) => setSearchParams({ ...searchParams, species: e.target.value })}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             >
+              {/* 值必须与库里存的一致（dog/cat/other）。
+                  这里以前写的是中文「狗」，而库里的记录是 'dog'，
+                  于是选"狗"只能匹配到极少数老数据，看着像丢记录。 */}
               <option value="">全部种类</option>
-              <option value="狗">🐕 狗</option>
-              <option value="猫">🐱 猫</option>
-              <option value="其他">其他</option>
+              <option value="dog">🐕 狗</option>
+              <option value="cat">🐱 猫</option>
+              <option value="other">其他</option>
             </select>
 
             {/* 性别筛选 */}

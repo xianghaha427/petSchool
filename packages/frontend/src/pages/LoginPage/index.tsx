@@ -47,12 +47,14 @@ const LoginPage = () => {
       const token = res.data?.token
       const userId = res.data?.id
       const userName = res.data?.userName
+      const role = res.data?.role
       console.log('token值:', token)
       console.log('id值:', userId)
-      // 保存 token 和用户信息
+      // 保存 token 和用户信息（role 仅用于前端收敛管理员入口，真正的权限判定在后端）
       localStorage.setItem('token', token)
       localStorage.setItem('userId', String(userId))
       localStorage.setItem('username', userName)
+      localStorage.setItem('role', String(role ?? 0))
 
       console.log('localStorage中的token:', localStorage.getItem('token'))
 
@@ -63,7 +65,8 @@ const LoginPage = () => {
       navigate('/')
     } catch (err: any) {
       console.error('登录错误:', err)
-      setError(err.response?.data?.message || '登录失败，请检查用户名和密码')
+      // 业务失败由 apiClient 抛 ApiError（它没有 response 字段），所以补一手 err.message
+      setError(err.response?.data?.message || err.message || '登录失败，请检查用户名和密码')
     } finally {
       setLoading(false)
     }
@@ -93,7 +96,7 @@ const LoginPage = () => {
       setShowRegister(false)
       setRegisterForm({ userName: '', password: '', email: '', phone: '' })
     } catch (err: any) {
-      setError(err.response?.data?.message || '注册失败')
+      setError(err.response?.data?.message || err.message || '注册失败')
     }
   }
 

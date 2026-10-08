@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import type { Pet } from '@/types/pet';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { getSpeciesEmoji } from '@/utils/petUtils';
 
 function cn(...inputs: Array<string | undefined | null | false>) {
   return twMerge(clsx(inputs));
@@ -52,7 +53,7 @@ export function PetCard({ pet, showActions = false }: PetCardProps) {
           <div className="flex items-center gap-4 text-sm text-gray-600">
             <div className="flex items-center gap-1">
               <span className="text-lg">
-                {pet.species === 'dog' ? '🐕' : pet.species === 'cat' ? '🐱' : '🐾'}
+                {getSpeciesEmoji(pet.species)}
               </span>
               <span>
                 {pet.breed || pet.species}

@@ -14,6 +14,7 @@ export function Header() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
+  const [role, setRole] = useState('0');
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -21,13 +22,16 @@ export function Header() {
   const checkAuth = () => {
     const token = localStorage.getItem('token');
     const username = localStorage.getItem('username');
-    console.log('Header检查登录状态, token:', !!token, 'username:', username);
+    const role = localStorage.getItem('role');
+    console.log('Header检查登录状态, token:', !!token, 'username:', username, 'role:', role);
     if (token) {
       setIsLoggedIn(true);
       setUsername(username || '');
+      setRole(role || '0');
     } else {
       setIsLoggedIn(false);
       setUsername('');
+      setRole('0');
     }
   };
 
@@ -88,8 +92,10 @@ export function Header() {
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
     localStorage.removeItem('username');
+    localStorage.removeItem('role');
     setIsLoggedIn(false);
     setUsername('');
+    setRole('0');
     setShowDropdown(false);
     navigate('/login');
   };
@@ -182,6 +188,24 @@ export function Header() {
                     >
                       <span>📋</span> 审核状态
                     </button>
+                    {role === '1' && (
+                      <button
+                        onClick={() => { navigate('/admin/pending'); setShowDropdown(false); }}
+                        className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2"
+                        style={{ color: TIFFY_BLUE_DARK }}
+                      >
+                        <span>🛠</span> 审核管理
+                      </button>
+                    )}
+                    {role === '1' && (
+                      <button
+                        onClick={() => { navigate('/admin/activities/new'); setShowDropdown(false); }}
+                        className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2"
+                        style={{ color: TIFFY_BLUE_DARK }}
+                      >
+                        <span>📅</span> 创建活动
+                      </button>
+                    )}
                     <div className="my-2 border-t border-gray-100" />
                     <button
                       onClick={handleLogout}
